@@ -1,0 +1,538 @@
+/* === Базовые стили === */
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #1a1a1a;
+  color: white;
+  font-family: 'Montserrat', sans-serif;
+  user-select: none;
+}
+
+.game-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+/* === Хедер и логотип === */
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.logo {
+  font-size: 24px;
+  font-weight: bold;
+  color: #4af;
+}
+
+.balance {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 20px;
+}
+
+.diamond-icon {
+  color: #4af;
+  font-size: 24px;
+  margin-right: 5px;
+  display: inline-block;
+}
+
+/* === Основной контент - флекс контейнер === */
+.main-content {
+  display: flex;
+  gap: 20px;
+}
+
+/* === Игровое поле === */
+.game-board {
+  flex: 2;
+  background: #2a2a2a;
+  border-radius: 10px;
+  padding: 20px;
+  position: relative;
+  margin-bottom: 20px;
+}
+
+.multiplier-display {
+  font-size: 32px;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 20px;
+  background: linear-gradient(45deg, #4af, #0af);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.graph {
+  height: 300px;
+  background: #1a1a1a;
+  border-radius: 5px;
+  overflow: hidden;
+  transition: background 0.1s;
+}
+
+/* === Профиль игрока === */
+.player-profile {
+  flex: 1;
+  background: #2a2a2a;
+  border-radius: 10px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.profile-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.avatar {
+  font-size: 40px;
+  margin-right: 15px;
+  user-select: none;
+}
+
+.username {
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.profile-stats {
+  margin-bottom: 20px;
+}
+
+.stat {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #333;
+  color: #aaa;
+}
+
+.stat-value {
+  font-weight: bold;
+  color: white;
+}
+
+.recent-bets-title {
+  font-weight: bold;
+  margin-bottom: 10px;
+  color: #4af;
+}
+
+.recent-bets {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+  max-height: 200px;
+}
+
+.recent-bet {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px;
+  background: #1a1a1a;
+  border-radius: 5px;
+}
+
+/* === История ставок (лестница) === */
+.bet-history {
+  background: #1a1a1a;
+  border-radius: 5px;
+  padding: 15px;
+  margin-top: 20px;
+}
+
+.history-title {
+  font-weight: bold;
+  margin-bottom: 10px;
+  color: #4af;
+  text-align: center;
+}
+
+.history-stairs {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  height: 200px;
+  overflow-y: auto;
+  padding: 10px;
+}
+
+.bet-item {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  border-radius: 5px;
+  background: #2a2a2a;
+  position: relative;
+  margin-left: 30px;
+  color: #ccc;
+}
+
+.bet-item::before {
+  content: "";
+  position: absolute;
+  left: -20px;
+  top: 50%;
+  width: 20px;
+  height: 2px;
+  background: #4af;
+  transform: translateY(-50%);
+}
+
+.bet-item:first-child::before {
+  display: none;
+}
+
+.bet-item:nth-child(odd) {
+  margin-left: 60px;
+}
+
+.bet-multiplier {
+  font-weight: bold;
+  margin-right: 10px;
+  color: #4af;
+  min-width: 50px;
+}
+
+.bet-amount {
+  margin-right: 10px;
+  color: #aaa;
+}
+
+.bet-profit {
+  margin-left: auto;
+  font-weight: bold;
+}
+
+.bet-profit.positive {
+  color: #4CAF50;
+}
+
+.bet-profit.negative {
+  color: #f44;
+}
+
+/* === Управление ставками === */
+.bet-controls {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.bet-controls input#bet-amount {
+  flex: 1;
+  padding: 15px;
+  border: none;
+  border-radius: 5px;
+  font-size: 16px;
+  background: #2a2a2a;
+  color: white;
+  user-select: text;
+}
+
+.bet-button,
+.cashout-button {
+  padding: 15px 25px;
+  border: none;
+  border-radius: 5px;
+  font-weight: bold;
+  cursor: pointer;
+  font-size: 16px;
+  user-select: none;
+  transition: background-color 0.3s, box-shadow 0.3s;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.bet-button {
+  background-color: #4af;
+  color: #111;
+  box-shadow: 0 4px 15px rgba(74, 170, 255, 0.7);
+}
+
+.bet-button:hover:not(:disabled) {
+  background-color: #66b3ff;
+  box-shadow: 0 6px 20px rgba(102, 179, 255, 0.9);
+}
+
+.cashout-button {
+  background-color: #4CAF50;
+  color: white;
+  box-shadow: 0 4px 15px rgba(76, 175, 80, 0.7);
+}
+
+.cashout-button:disabled {
+  background-color: #666;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.cashout-button:hover:not(:disabled) {
+  background-color: #66ff66;
+  box-shadow: 0 6px 20px rgba(102, 255, 102, 0.9);
+}
+
+/* === Кнопки - общие состояния === */
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* === Форма авторизации === */
+.auth-container {
+  background: #222;
+  padding: 30px 35px;
+  border-radius: 12px;
+  width: 360px;
+  margin: 40px auto 30px;
+  box-shadow: 0 0 20px rgba(74, 170, 255, 0.7);
+  color: #eee;
+  font-weight: 600;
+  font-size: 16px;
+  text-align: center;
+  transition: box-shadow 0.3s ease;
+  user-select: none;
+}
+
+.auth-container:hover {
+  box-shadow: 0 0 30px rgba(74, 170, 255, 0.9);
+}
+
+.auth-container h2 {
+  margin-bottom: 25px;
+  color: #4af;
+  font-weight: 700;
+  letter-spacing: 1.3px;
+  text-transform: uppercase;
+  user-select: text;
+}
+
+.auth-container input {
+  width: 100%;
+  padding: 16px 18px;
+  margin-bottom: 20px;
+  border: none;
+  border-radius: 10px;
+  background: #121212;
+  color: #eee;
+  font-size: 16px;
+  font-weight: 600;
+  transition: background-color 0.3s, box-shadow 0.3s;
+  user-select: text;
+}
+
+.auth-container input::placeholder {
+  color: #666;
+  font-weight: 500;
+}
+
+.auth-container input:focus {
+  outline: none;
+  background: #1a1a1a;
+  box-shadow: 0 0 10px #4af;
+}
+
+.auth-buttons {
+  display: flex;
+  gap: 18px;
+  justify-content: center;
+}
+
+.btn {
+  flex: 1;
+  padding: 16px 0;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 16px;
+  cursor: pointer;
+  user-select: none;
+  border: none;
+  transition: background-color 0.3s, color 0.3s;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.btn.primary {
+  background-color: #4af;
+  color: #121212;
+  box-shadow: 0 4px 15px rgba(74, 170, 255, 0.7);
+}
+
+.btn.primary:hover {
+  background-color: #66b3ff;
+  box-shadow: 0 6px 20px rgba(102, 179, 255, 0.9);
+}
+
+.btn.secondary {
+  background-color: transparent;
+  color: #4af;
+  border: 2px solid #4af;
+  box-shadow: none;
+}
+
+.btn.secondary:hover {
+  background-color: #4af;
+  color: #121212;
+  box-shadow: 0 4px 15px rgba(74, 170, 255, 0.7);
+}
+.auth-container {
+  background: #222;
+  padding: 30px 35px;
+  border-radius: 12px;
+  width: 360px;
+  margin: 40px auto 30px;
+  box-shadow: 0 0 20px rgba(74, 170, 255, 0.7);
+  color: #eee;
+  font-weight: 600;
+  font-size: 16px;
+  text-align: center;
+  user-select: none;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.auth-container h2 {
+  margin-bottom: 10px;
+  color: #4af;
+  font-weight: 700;
+  letter-spacing: 1.3px;
+  text-transform: uppercase;
+  user-select: text;
+}
+
+/* Поля ввода - теперь блоки с шириной 100% и отступами */
+.auth-container input {
+  width: 100%;
+  padding: 12px 16px;
+  border: none;
+  border-radius: 8px;
+  background: #121212;
+  color: #eee;
+  font-size: 16px;
+  font-weight: 600;
+  transition: background-color 0.3s, box-shadow 0.3s;
+  user-select: text;
+  box-sizing: border-box;
+}
+
+/* Подсказки */
+.auth-container input::placeholder {
+  color: #666;
+  font-weight: 500;
+}
+
+.auth-container input:focus {
+  outline: none;
+  background: #1a1a1a;
+  box-shadow: 0 0 10px #4af;
+}
+
+/* Контейнер кнопок - горизонтальный флекс с отступами */
+.auth-buttons {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+}
+
+/* Кнопки - одинаковой ширины, с отступами и радиусом */
+.btn {
+  flex: 1;
+  padding: 14px 0;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 16px;
+  cursor: pointer;
+  user-select: none;
+  border: none;
+  transition: background-color 0.3s, color 0.3s;
+  box-sizing: border-box;
+}
+
+/* Кнопка входа */
+.btn.primary {
+  background-color: #4af;
+  color: #121212;
+  box-shadow: 0 4px 15px rgba(74, 170, 255, 0.7);
+}
+
+.btn.primary:hover {
+  background-color: #66b3ff;
+}
+
+/* Кнопка регистрации */
+.btn.secondary {
+  background-color: transparent;
+  color: #4af;
+  border: 2px solid #4af;
+}
+
+.btn.secondary:hover {
+  background-color: #4af;
+  color: #121212;
+}
+.profile-header {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  font-weight: 700;
+  font-size: 20px;
+  color: #4af;
+}
+
+.profile-info {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+#profile-username {
+  /* Можно добавить отступ снизу, если нужно */
+}
+
+
+
+.profile-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 180px; /* ограничение ширины блока с ником и кнопкой */
+}
+
+.username {
+  font-weight: 700;
+  font-size: 20px;
+  color: #4af;
+  white-space: normal; /* разрешить перенос */
+  word-break: break-word; /* переносить длинные слова */
+  overflow-wrap: break-word;
+}
+
+.logout-btn {
+  padding: 4px 10px;           /* уменьшили отступы */
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  border: none;
+  border-radius: 6px;
+  background-color: #4af;      /* синий фон в стиле */
+  color: #121212;
+  align-self: flex-start;
+  width: max-content;          /* ширина по содержимому */
+  box-shadow: 0 2px 6px rgba(74, 170, 255, 0.7);
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.logout-btn:hover {
+  background-color: #66b3ff;
+  box-shadow: 0 4px 12px rgba(102, 179, 255, 0.9);
+}
+
