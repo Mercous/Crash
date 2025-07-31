@@ -330,7 +330,11 @@ startBetBtn.addEventListener('click', async () => {
   }
   if (isPlaying) return;
 
-  betValue = parseInt(betAmount.value);
+  const val = betAmount.value.trim();
+  betValue = parseInt(val, 10);
+
+  console.log('Ставка из поля:', val, 'Parsed betValue:', betValue);
+
   if (isNaN(betValue) || betValue < 1) {
     alert('Введите корректную ставку (минимум 1 алмаз)');
     return;
@@ -340,7 +344,6 @@ startBetBtn.addEventListener('click', async () => {
     return;
   }
 
-  // Вызов RPC place_bet с двумя параметрами
   const { data, error } = await supabaseClient.rpc('place_bet', { 
     bet_amount: betValue,
     round_id: currentRound.id
@@ -351,11 +354,10 @@ startBetBtn.addEventListener('click', async () => {
     return;
   }
 
-  // Обновляем баланс пользователя
   window.currentUser.balance = data[0].new_balance;
   balanceDisplay.textContent = window.currentUser.balance;
 
-  // Проверяем, если betting_started_at ещё не установлен, он установится на сервере
+  // Обновляем время начала приёма ставок
   const { data: updatedRound } = await supabaseClient
     .from('rounds')
     .select('*')
@@ -374,7 +376,7 @@ startBetBtn.addEventListener('click', async () => {
       multiplierDisplay.textContent = 'Ожидание ставок...';
       drawGraph(1, crashPoint);
       cashOutBtn.disabled = true;
-      startBetBtn.disabled = true; // блокируем кнопку, чтобы не ставили повторно
+      startBetBtn.disabled = true;
       betAmount.disabled = true;
     } else {
       bettingTimer.textContent = '';
