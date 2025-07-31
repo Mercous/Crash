@@ -3,7 +3,6 @@ const supabaseUrl = 'https://agbbllrqsdwgougtehhc.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFnYmJsbHJxc2R3Z291Z3RlaGhjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM5Mjg4ODQsImV4cCI6MjA2OTUwNDg4NH0.XCPzNuwVbtO-2UCYyOpoYzUUQYnq0HjZEJwEEHxbGNU';
 const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
-
 // ==================== DOM ЭЛЕМЕНТЫ ====================
 const authScreen = document.getElementById('auth-screen');
 const gameScreen = document.getElementById('game-screen');
@@ -65,15 +64,9 @@ let crashPoint = null;
 let betValue = 0;
 let startTime = null;
 
-// ==================== ФУНКЦИИ ====================
+let currentRound = null; // текущий активный раунд
 
-// Генерация точки краша (честный рандом)
-function generateCrashPoint() {
-  const seed = window.crypto.getRandomValues(new Uint32Array(1))[0];
-  const e = Math.pow(2, 32);
-  const h = seed / e;
-  return Math.floor(100 / (1 - 0.99 * h)) / 100;
-}
+// ==================== ФУНКЦИИ ====================
 
 // Рисуем плавный график с логарифмической кривой
 let currentX = 0; // текущая позиция по X в пикселях
@@ -122,13 +115,19 @@ function drawGraph(multiplier, crash) {
   }
 }
 
-// Анимация игры
+// Анимация игры, синхронизированная с серверным раундом
 function animateGame(timestamp) {
   if (!startTime) startTime = timestamp;
   const elapsed = (timestamp - startTime) / 1000;
 
   currentMultiplier = 1 + elapsed * 0.5;
   currentX = elapsed * speed;
+
+  if (!crashPoint) {
+    // Если краш-поинт не известен, останавливаем анимацию
+    endGame(false);
+    return;
+  }
 
   if (currentMultiplier >= crashPoint) {
     currentMultiplier = crashPoint;
@@ -144,8 +143,93 @@ function animateGame(timestamp) {
   gameAnimationFrame = requestAnimationFrame(animateGame);
 }
 
+// Сброс состояния при новом раунде
+function resetGameStateForNewRound() {
+  isPlaying = false;
+  cashOutBtn.disabled = true;
+  startBetBtn.disabled = false;
+  betAmount.disabled = false;
+  multiplierDisplay.textContent = '1.00x';
+  currentMultiplier = 1.0;
+  startTime = null;
+  currentX = 0;
+  drawGraph(1, crashPoint || 10);
+  loadCurrentPlayersBets();
+  loadBetHistory();
+}
+
+// ==================== ПОДПИСКА НА АКТИВНЫЙ РАУНД ====================
+
+async function subscribeToActiveRound() {
+  // Загрузить текущий активный раунд
+  const { data, error } = await supabaseClient
+    .from('rounds')
+    .select('*')
+    .is('ended_at', null)
+    .order('started_at', { ascending: false })
+    .limit(1)
+    .single();
+
+  if (error && error.code !== 'PGRST116') {
+    console.error('Ошибка загрузки активного раунда:', error);
+    return;
+  }
+
+  if (data) {
+    currentRound = data;
+    crashPoint = currentRound.crash_multiplier;
+    console.log('Текущий активный раунд:', currentRound);
+    resetGameStateForNewRound();
+    startAnimationIfNeeded();
+  } else {
+    console.log('Активный раунд не найден, ожидаем появления...');
+    currentRound = null;
+    crashPoint = null;
+  }
+
+  // Подписка на изменения в таблице rounds
+  supabaseClient
+    .from('rounds')
+    .on('INSERT', payload => {
+      currentRound = payload.new;
+      crashPoint = currentRound.crash_multiplier;
+      console.log('Новый раунд:', currentRound);
+      resetGameStateForNewRound();
+      startAnimationIfNeeded();
+    })
+    .on('UPDATE', payload => {
+      if (currentRound && payload.new.id === currentRound.id) {
+        if (payload.new.ended_at) {
+          console.log('Раунд завершён:', payload.new);
+          currentRound = null;
+          crashPoint = null;
+          endGame(false);
+        }
+      }
+    })
+    .subscribe();
+}
+
+function startAnimationIfNeeded() {
+  if (!isPlaying && crashPoint) {
+    isPlaying = true;
+    startTime = null;
+    currentMultiplier = 1.0;
+    cashOutBtn.disabled = false;
+    startBetBtn.disabled = true;
+    betAmount.disabled = true;
+    gameAnimationFrame = requestAnimationFrame(animateGame);
+  }
+}
+
+// ==================== ОБРАБОТКА СТАВОК ====================
+
 // Старт ставки — вызывает RPC place_bet на сервере
 startBetBtn.addEventListener('click', async () => {
+  if (!currentRound) {
+    alert('Раунд сейчас не активен. Подождите следующего раунда.');
+    return;
+  }
   if (isPlaying) return;
 
   betValue = parseInt(betAmount.value);
@@ -158,40 +242,41 @@ startBetBtn.addEventListener('click', async () => {
     return;
   }
 
-  // Вызываем RPC place_bet для списания баланса и создания раунда + ставки
-  const { data, error } = await supabaseClient.rpc('place_bet', { bet_amount: betValue });
+  // Вызываем RPC place_bet, передавая текущий раунд id
+  const { data, error } = await supabaseClient.rpc('place_bet', { 
+    bet_amount: betValue,
+    round_id: currentRound.id
+  });
 
   if (error) {
     alert('Ошибка старта ставки: ' + error.message);
     return;
   }
 
-  crashPoint = data[0].crash_point;
+  // Обновляем баланс пользователя
   window.currentUser.balance = data[0].new_balance;
   balanceDisplay.textContent = window.currentUser.balance;
 
+  // Ставка принята, ждем краша
   isPlaying = true;
-  currentMultiplier = 1.0;
-  startTime = null;
   cashOutBtn.disabled = false;
   startBetBtn.disabled = true;
   betAmount.disabled = true;
 
-  multiplierDisplay.textContent = '1.00x';
-  drawGraph(1, crashPoint);
-
-  gameAnimationFrame = requestAnimationFrame(animateGame);
+  showNotification(`Ставка ${betValue}◆ принята в раунд #${currentRound.id}`);
 });
 
 // Забрать выигрыш — вызывает RPC cash_out на сервере
 cashOutBtn.addEventListener('click', async () => {
   if (!isPlaying) return;
 
-  // Останавливаем анимацию и вызываем cash_out
   cancelAnimationFrame(gameAnimationFrame);
 
   try {
-    const { data, error } = await supabaseClient.rpc('cash_out', { multiplier: currentMultiplier });
+    const { data, error } = await supabaseClient.rpc('cash_out', { 
+      multiplier: currentMultiplier,
+      round_id: currentRound?.id
+    });
 
     if (error) throw error;
 
@@ -218,12 +303,14 @@ async function endGame(cashedOut) {
   startBetBtn.disabled = false;
   betAmount.disabled = false;
 
-  if (!cashedOut) {
-    showNotification(`Краш! Вы проиграли ${betValue} алмазов (краш на ${crashPoint.toFixed(2)}x)`);
+  if (!cashedOut && betValue > 0) {
+    showNotification(`Краш! Вы проиграли ${betValue} алмазов (краш на ${crashPoint?.toFixed(2)}x)`);
   }
 
   multiplierDisplay.textContent = '1.00x';
   drawGraph(1, 10);
+
+  betValue = 0;
 
   await loadBetHistory();
   await loadCurrentPlayersBets();
@@ -340,14 +427,12 @@ registerBtn.addEventListener('click', async () => {
     return;
   }
 
-  // Ограничение длины ника, например максимум 15 символов
   const maxUsernameLength = 15;
   if (username.length > maxUsernameLength) {
     alert(`Ник не должен превышать ${maxUsernameLength} символов.`);
     return;
   }
 
-  // Создаём пользователя в Supabase Auth
   const { data, error } = await supabaseClient.auth.signUp({ email, password });
 
   if (error) {
@@ -360,14 +445,13 @@ registerBtn.addEventListener('click', async () => {
     return;
   }
 
-  // Создаём профиль в таблице users с ником из формы
   const { error: insertError } = await supabaseClient
     .from('users')
     .insert([
       {
         id: data.user.id,
         username: username,
-        balance: 1 // стартовый баланс
+        balance: 1
       }
     ]);
 
@@ -385,7 +469,6 @@ registerBtn.addEventListener('click', async () => {
   tabLogin.click();
 });
 
-
 // Логин через Supabase Auth
 loginBtn.addEventListener('click', async () => {
   const email = loginEmailInput.value.trim();
@@ -398,13 +481,12 @@ loginBtn.addEventListener('click', async () => {
 
   const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
 
-if (error) {
-  alert('Ошибка входа: ' + error.message);
-  return;
-}
+  if (error) {
+    alert('Ошибка входа: ' + error.message);
+    return;
+  }
 
-await onUserLogin(data.user);
-
+  await onUserLogin(data.user);
 });
 
 // При загрузке страницы проверяем сессию
@@ -428,7 +510,6 @@ async function onUserLogin(user) {
 
   if (error) {
     if (error.code === 'PGRST116' || error.message.includes('No rows found')) {
-      // Профиля нет — создаём
       const { data: newProfile, error: insertError } = await supabaseClient
         .from('users')
         .insert([{ id: user.id, username: user.email.split('@')[0], balance: 1000 }])
@@ -456,8 +537,10 @@ async function onUserLogin(user) {
 
   await loadBetHistory();
   await loadCurrentPlayersBets();
-}
 
+  // Подписываемся на активный раунд и обновления
+  await subscribeToActiveRound();
+}
 
 // Показать экран авторизации
 function showAuthScreen() {
