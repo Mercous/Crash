@@ -243,8 +243,8 @@ async function subscribeToActiveRound() {
     multiplierDisplay.textContent = '1.00x';
     drawGraph(1, 10);
     cashOutBtn.disabled = true;
-    startBetBtn.disabled = true;
-    betAmount.disabled = true;
+    startBetBtn.disabled = false;
+    betAmount.disabled = false;
   }
 
   // Подписка на изменения в таблице rounds через канал
