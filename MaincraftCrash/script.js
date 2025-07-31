@@ -154,6 +154,7 @@ function resetGameStateForNewRound() {
   startTime = null;
   currentX = 0;
   drawGraph(1, crashPoint || 10);
+
   loadCurrentPlayersBets();
   loadBetHistory();
 }
@@ -180,6 +181,7 @@ async function subscribeToActiveRound() {
     crashPoint = currentRound.crash_multiplier;
     console.log('Текущий активный раунд:', currentRound);
     resetGameStateForNewRound();
+    loadCurrentPlayersBets();
 
     // Запускаем анимацию с учётом betting_started_at, если есть
     if (currentRound.betting_started_at) {
@@ -192,7 +194,6 @@ async function subscribeToActiveRound() {
         startAnimationIfNeeded();
       }
     }
-
   } else {
     console.log('Активный раунд не найден, ожидаем появления...');
     currentRound = null;
@@ -207,6 +208,7 @@ async function subscribeToActiveRound() {
       crashPoint = currentRound.crash_multiplier;
       console.log('Новый раунд:', currentRound);
       resetGameStateForNewRound();
+      loadCurrentPlayersBets();
 
       if (currentRound.betting_started_at) {
         const startedAt = new Date(currentRound.betting_started_at).getTime();
@@ -227,7 +229,7 @@ async function subscribeToActiveRound() {
           crashPoint = null;
           endGame(false);
         }
-        // Можно добавить обновление betting_started_at, если оно появилось позже
+        // Обновление betting_started_at, если оно появилось позже
         if (!currentRound.betting_started_at && payload.new.betting_started_at) {
           currentRound.betting_started_at = payload.new.betting_started_at;
           const startedAt = new Date(currentRound.betting_started_at).getTime();
@@ -239,6 +241,7 @@ async function subscribeToActiveRound() {
             startAnimationIfNeeded();
           }
         }
+        loadCurrentPlayersBets();
       }
     })
     .subscribe();
@@ -418,8 +421,13 @@ async function loadBetHistory() {
   updateProfileStats(bets);
 }
 
-// Загрузка текущих ставок всех игроков
+// Загрузка текущих ставок всех игроков (только для текущего раунда)
 async function loadCurrentPlayersBets() {
+  if (!currentRound) {
+    playersBetsList.innerHTML = '<div>Раунд не активен</div>';
+    return;
+  }
+
   const { data: bets, error } = await supabaseClient
     .from('bets')
     .select(`
@@ -430,6 +438,7 @@ async function loadCurrentPlayersBets() {
       created_at,
       user:users(username)
     `)
+    .eq('round_id', currentRound.id) // Фильтрация по текущему раунду
     .order('created_at', { ascending: false })
     .limit(10);
 
