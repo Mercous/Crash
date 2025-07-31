@@ -216,7 +216,6 @@ async function subscribeToActiveRound() {
       const elapsedMs = now - startedAt;
 
       if (elapsedMs < BETTING_PERIOD_MS) {
-        // Показываем таймер приёма ставок
         startBettingCountdown(startedAt);
         multiplierDisplay.textContent = 'Ожидание ставок...';
         drawGraph(1, crashPoint);
@@ -224,13 +223,11 @@ async function subscribeToActiveRound() {
         startBetBtn.disabled = false;
         betAmount.disabled = false;
       } else {
-        // Период приёма ставок закончился — запускаем игру
         bettingTimer.textContent = '';
         startTime = performance.now() - elapsedMs;
         startAnimationIfNeeded();
       }
     } else {
-      // Нет ставок — показываем, что ждём первой ставки
       bettingTimer.textContent = 'Ожидание первой ставки...';
       multiplierDisplay.textContent = '1.00x';
       drawGraph(1, crashPoint);
@@ -250,10 +247,9 @@ async function subscribeToActiveRound() {
     betAmount.disabled = true;
   }
 
-  // Подписка на изменения в таблице rounds
-  supabaseClient
-    .from('rounds')
-    .on('INSERT', payload => {
+  // Подписка на изменения в таблице rounds через канал
+  const channel = supabaseClient.channel('public:rounds')
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'rounds' }, payload => {
       currentRound = payload.new;
       crashPoint = currentRound.crash_multiplier;
       console.log('Новый раунд:', currentRound);
@@ -286,7 +282,7 @@ async function subscribeToActiveRound() {
         betAmount.disabled = false;
       }
     })
-    .on('UPDATE', payload => {
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'rounds' }, payload => {
       if (currentRound && payload.new.id === currentRound.id) {
         if (payload.new.ended_at) {
           console.log('Раунд завершён:', payload.new);
@@ -294,7 +290,6 @@ async function subscribeToActiveRound() {
           crashPoint = null;
           endGame(false);
         }
-        // Обновление betting_started_at, если оно появилось позже
         if (!currentRound.betting_started_at && payload.new.betting_started_at) {
           currentRound.betting_started_at = payload.new.betting_started_at;
           const startedAt = new Date(currentRound.betting_started_at).getTime();
@@ -316,8 +311,9 @@ async function subscribeToActiveRound() {
         }
         loadCurrentPlayersBets();
       }
-    })
-    .subscribe();
+    });
+
+  await channel.subscribe();
 }
 
 // ==================== ОБРАБОТКА СТАВОК ====================
