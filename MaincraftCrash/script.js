@@ -24,24 +24,6 @@ const loginForm = document.getElementById('login-form');
 const registerForm = document.getElementById('register-form');
 const logoutBtn = document.getElementById('logout-btn');
 
-logoutBtn.addEventListener('click', async () => {
-  await logout();
-});
-
-tabLogin.addEventListener('click', () => {
-  tabLogin.classList.add('active');
-  tabRegister.classList.remove('active');
-  loginForm.style.display = 'block';
-  registerForm.style.display = 'none';
-});
-
-tabRegister.addEventListener('click', () => {
-  tabRegister.classList.add('active');
-  tabLogin.classList.remove('active');
-  registerForm.style.display = 'block';
-  loginForm.style.display = 'none';
-});
-
 // Игровой интерфейс
 const betAmount = document.getElementById('bet-amount');
 const startBetBtn = document.getElementById('start-bet');
@@ -55,6 +37,7 @@ const profileMaxMultiplier = document.getElementById('profile-max-multiplier');
 const profileTotalGames = document.getElementById('profile-total-games');
 const graphCanvas = document.getElementById('graph');
 const ctx = graphCanvas.getContext('2d');
+const bettingTimer = document.getElementById('betting-timer');
 
 // ==================== ПЕРЕМЕННЫЕ ИГРЫ ====================
 let currentMultiplier = 1.0;
@@ -65,6 +48,10 @@ let betValue = 0;
 let startTime = null;
 
 let currentRound = null; // текущий активный раунд
+
+// Таймер приёма ставок
+let bettingCountdownInterval = null;
+const BETTING_PERIOD_MS = 10 * 1000; // 10 секунд
 
 // ==================== ФУНКЦИИ ====================
 
@@ -155,8 +142,48 @@ function resetGameStateForNewRound() {
   currentX = 0;
   drawGraph(1, crashPoint || 10);
 
+  bettingTimer.textContent = '';
+  clearInterval(bettingCountdownInterval);
+
   loadCurrentPlayersBets();
   loadBetHistory();
+}
+
+// Запуск таймера приёма ставок
+function startBettingCountdown(startedAt) {
+  clearInterval(bettingCountdownInterval);
+
+  function updateTimer() {
+    const now = Date.now();
+    const elapsed = now - startedAt;
+    const remaining = BETTING_PERIOD_MS - elapsed;
+
+    if (remaining <= 0) {
+      clearInterval(bettingCountdownInterval);
+      bettingTimer.textContent = '';
+      // Запускаем игру (анимацию)
+      startAnimationIfNeeded();
+    } else {
+      bettingTimer.textContent = `Приём ставок: ${(remaining / 1000).toFixed(1)} сек.`;
+    }
+  }
+
+  updateTimer();
+  bettingCountdownInterval = setInterval(updateTimer, 100);
+}
+
+// Запуск анимации, если раунд есть и не играет
+function startAnimationIfNeeded() {
+  if (!isPlaying && crashPoint) {
+    isPlaying = true;
+    if (!startTime) startTime = performance.now();
+    currentMultiplier = 1.0;
+    cashOutBtn.disabled = false;
+    startBetBtn.disabled = true;
+    betAmount.disabled = true;
+    bettingTimer.textContent = '';
+    gameAnimationFrame = requestAnimationFrame(animateGame);
+  }
 }
 
 // ==================== ПОДПИСКА НА АКТИВНЫЙ РАУНД ====================
@@ -183,21 +210,44 @@ async function subscribeToActiveRound() {
     resetGameStateForNewRound();
     loadCurrentPlayersBets();
 
-    // Запускаем анимацию с учётом betting_started_at, если есть
     if (currentRound.betting_started_at) {
       const startedAt = new Date(currentRound.betting_started_at).getTime();
       const now = Date.now();
       const elapsedMs = now - startedAt;
 
-      if (elapsedMs > 0) {
+      if (elapsedMs < BETTING_PERIOD_MS) {
+        // Показываем таймер приёма ставок
+        startBettingCountdown(startedAt);
+        multiplierDisplay.textContent = 'Ожидание ставок...';
+        drawGraph(1, crashPoint);
+        cashOutBtn.disabled = true;
+        startBetBtn.disabled = false;
+        betAmount.disabled = false;
+      } else {
+        // Период приёма ставок закончился — запускаем игру
+        bettingTimer.textContent = '';
         startTime = performance.now() - elapsedMs;
         startAnimationIfNeeded();
       }
+    } else {
+      // Нет ставок — показываем, что ждём первой ставки
+      bettingTimer.textContent = 'Ожидание первой ставки...';
+      multiplierDisplay.textContent = '1.00x';
+      drawGraph(1, crashPoint);
+      cashOutBtn.disabled = true;
+      startBetBtn.disabled = false;
+      betAmount.disabled = false;
     }
   } else {
     console.log('Активный раунд не найден, ожидаем появления...');
     currentRound = null;
     crashPoint = null;
+    bettingTimer.textContent = 'Ожидание нового раунда...';
+    multiplierDisplay.textContent = '1.00x';
+    drawGraph(1, 10);
+    cashOutBtn.disabled = true;
+    startBetBtn.disabled = true;
+    betAmount.disabled = true;
   }
 
   // Подписка на изменения в таблице rounds
@@ -215,10 +265,25 @@ async function subscribeToActiveRound() {
         const now = Date.now();
         const elapsedMs = now - startedAt;
 
-        if (elapsedMs > 0) {
+        if (elapsedMs < BETTING_PERIOD_MS) {
+          startBettingCountdown(startedAt);
+          multiplierDisplay.textContent = 'Ожидание ставок...';
+          drawGraph(1, crashPoint);
+          cashOutBtn.disabled = true;
+          startBetBtn.disabled = false;
+          betAmount.disabled = false;
+        } else {
+          bettingTimer.textContent = '';
           startTime = performance.now() - elapsedMs;
           startAnimationIfNeeded();
         }
+      } else {
+        bettingTimer.textContent = 'Ожидание первой ставки...';
+        multiplierDisplay.textContent = '1.00x';
+        drawGraph(1, crashPoint);
+        cashOutBtn.disabled = true;
+        startBetBtn.disabled = false;
+        betAmount.disabled = false;
       }
     })
     .on('UPDATE', payload => {
@@ -236,7 +301,15 @@ async function subscribeToActiveRound() {
           const now = Date.now();
           const elapsedMs = now - startedAt;
 
-          if (elapsedMs > 0) {
+          if (elapsedMs < BETTING_PERIOD_MS) {
+            startBettingCountdown(startedAt);
+            multiplierDisplay.textContent = 'Ожидание ставок...';
+            drawGraph(1, crashPoint);
+            cashOutBtn.disabled = true;
+            startBetBtn.disabled = false;
+            betAmount.disabled = false;
+          } else {
+            bettingTimer.textContent = '';
             startTime = performance.now() - elapsedMs;
             startAnimationIfNeeded();
           }
@@ -245,18 +318,6 @@ async function subscribeToActiveRound() {
       }
     })
     .subscribe();
-}
-
-function startAnimationIfNeeded() {
-  if (!isPlaying && crashPoint) {
-    isPlaying = true;
-    if (!startTime) startTime = performance.now();
-    currentMultiplier = 1.0;
-    cashOutBtn.disabled = false;
-    startBetBtn.disabled = true;
-    betAmount.disabled = true;
-    gameAnimationFrame = requestAnimationFrame(animateGame);
-  }
 }
 
 // ==================== ОБРАБОТКА СТАВОК ====================
@@ -294,11 +355,33 @@ startBetBtn.addEventListener('click', async () => {
   window.currentUser.balance = data[0].new_balance;
   balanceDisplay.textContent = window.currentUser.balance;
 
-  // Ставка принята, ждем краша
-  isPlaying = true;
-  cashOutBtn.disabled = false;
-  startBetBtn.disabled = true;
-  betAmount.disabled = true;
+  // Проверяем, если betting_started_at ещё не установлен, он установится на сервере
+  const { data: updatedRound } = await supabaseClient
+    .from('rounds')
+    .select('*')
+    .eq('id', currentRound.id)
+    .single();
+
+  currentRound.betting_started_at = updatedRound.betting_started_at;
+
+  if (currentRound.betting_started_at) {
+    const startedAt = new Date(currentRound.betting_started_at).getTime();
+    const now = Date.now();
+    const elapsedMs = now - startedAt;
+
+    if (elapsedMs < BETTING_PERIOD_MS) {
+      startBettingCountdown(startedAt);
+      multiplierDisplay.textContent = 'Ожидание ставок...';
+      drawGraph(1, crashPoint);
+      cashOutBtn.disabled = true;
+      startBetBtn.disabled = true; // блокируем кнопку, чтобы не ставили повторно
+      betAmount.disabled = true;
+    } else {
+      bettingTimer.textContent = '';
+      startTime = performance.now() - elapsedMs;
+      startAnimationIfNeeded();
+    }
+  }
 
   showNotification(`Ставка ${betValue}◆ принята в раунд #${currentRound.id}`);
 });
@@ -312,7 +395,7 @@ cashOutBtn.addEventListener('click', async () => {
   try {
     const { data, error } = await supabaseClient.rpc('cash_out', { 
       multiplier: currentMultiplier,
-      round_id: currentRound?.id
+      p_round_id: currentRound?.id
     });
 
     if (error) throw error;
@@ -607,9 +690,9 @@ async function logout() {
 // ==================== ИНИЦИАЛИЗАЦИЯ ====================
 checkSession();
 
-// Обновлять текущие ставки каждые 10 секунд
+// Обновлять текущие ставки каждую секунду
 setInterval(() => {
   if (window.currentUser) {
     loadCurrentPlayersBets();
   }
-}, 10000);
+}, 1000);
