@@ -320,16 +320,10 @@ async function subscribeToActiveRound() {
 
 // Старт ставки — вызывает RPC place_bet на сервере
 startBetBtn.addEventListener('click', async () => {
-  if (!currentRound) {
-    alert('Раунд сейчас не активен. Подождите следующего раунда.');
-    return;
-  }
   if (isPlaying) return;
 
   const val = betAmount.value.trim();
   betValue = parseInt(val, 10);
-
-  console.log('Ставка из поля:', val, 'Parsed betValue:', betValue);
 
   if (isNaN(betValue) || betValue < 1) {
     alert('Введите корректную ставку (минимум 1 алмаз)');
@@ -340,9 +334,9 @@ startBetBtn.addEventListener('click', async () => {
     return;
   }
 
+  // Вызываем place_bet без round_id — сервер сам создаст раунд, если нужно
   const { data, error } = await supabaseClient.rpc('place_bet', { 
-    bet_amount: betValue,
-    round_id: currentRound.id
+    bet_amount: betValue
   });
 
   if (error) {
@@ -353,36 +347,45 @@ startBetBtn.addEventListener('click', async () => {
   window.currentUser.balance = data[0].new_balance;
   balanceDisplay.textContent = window.currentUser.balance;
 
-  // Обновляем время начала приёма ставок
-  const { data: updatedRound } = await supabaseClient
+  // Обновляем текущий активный раунд (лениво подгружаем с сервера)
+  const { data: activeRound, error: roundError } = await supabaseClient
     .from('rounds')
     .select('*')
-    .eq('id', currentRound.id)
+    .is('ended_at', null)
+    .order('started_at', { ascending: false })
+    .limit(1)
     .single();
 
-  currentRound.betting_started_at = updatedRound.betting_started_at;
+  if (!roundError && activeRound) {
+    currentRound = activeRound;
+    crashPoint = currentRound.crash_multiplier;
 
-  if (currentRound.betting_started_at) {
-    const startedAt = new Date(currentRound.betting_started_at).getTime();
-    const now = Date.now();
-    const elapsedMs = now - startedAt;
+    // Обновляем UI и запускаем таймер или анимацию
+    resetGameStateForNewRound();
 
-    if (elapsedMs < BETTING_PERIOD_MS) {
-      startBettingCountdown(startedAt);
-      multiplierDisplay.textContent = 'Ожидание ставок...';
-      drawGraph(1, crashPoint);
-      cashOutBtn.disabled = true;
-      startBetBtn.disabled = true;
-      betAmount.disabled = true;
-    } else {
-      bettingTimer.textContent = '';
-      startTime = performance.now() - elapsedMs;
-      startAnimationIfNeeded();
+    if (currentRound.betting_started_at) {
+      const startedAt = new Date(currentRound.betting_started_at).getTime();
+      const now = Date.now();
+      const elapsedMs = now - startedAt;
+
+      if (elapsedMs < BETTING_PERIOD_MS) {
+        startBettingCountdown(startedAt);
+        multiplierDisplay.textContent = 'Ожидание ставок...';
+        drawGraph(1, crashPoint);
+        cashOutBtn.disabled = true;
+        startBetBtn.disabled = true;
+        betAmount.disabled = true;
+      } else {
+        bettingTimer.textContent = '';
+        startTime = performance.now() - elapsedMs;
+        startAnimationIfNeeded();
+      }
     }
   }
 
-  showNotification(`Ставка ${betValue}◆ принята в раунд #${currentRound.id}`);
+  showNotification(`Ставка ${betValue}◆ принята в раунд #${currentRound?.id || '?'}`);
 });
+
 
 // Забрать выигрыш — вызывает RPC cash_out на сервере
 cashOutBtn.addEventListener('click', async () => {
