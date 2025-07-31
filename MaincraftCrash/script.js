@@ -180,7 +180,19 @@ async function subscribeToActiveRound() {
     crashPoint = currentRound.crash_multiplier;
     console.log('Текущий активный раунд:', currentRound);
     resetGameStateForNewRound();
-    startAnimationIfNeeded();
+
+    // Запускаем анимацию с учётом betting_started_at, если есть
+    if (currentRound.betting_started_at) {
+      const startedAt = new Date(currentRound.betting_started_at).getTime();
+      const now = Date.now();
+      const elapsedMs = now - startedAt;
+
+      if (elapsedMs > 0) {
+        startTime = performance.now() - elapsedMs;
+        startAnimationIfNeeded();
+      }
+    }
+
   } else {
     console.log('Активный раунд не найден, ожидаем появления...');
     currentRound = null;
@@ -195,7 +207,17 @@ async function subscribeToActiveRound() {
       crashPoint = currentRound.crash_multiplier;
       console.log('Новый раунд:', currentRound);
       resetGameStateForNewRound();
-      startAnimationIfNeeded();
+
+      if (currentRound.betting_started_at) {
+        const startedAt = new Date(currentRound.betting_started_at).getTime();
+        const now = Date.now();
+        const elapsedMs = now - startedAt;
+
+        if (elapsedMs > 0) {
+          startTime = performance.now() - elapsedMs;
+          startAnimationIfNeeded();
+        }
+      }
     })
     .on('UPDATE', payload => {
       if (currentRound && payload.new.id === currentRound.id) {
@@ -205,6 +227,18 @@ async function subscribeToActiveRound() {
           crashPoint = null;
           endGame(false);
         }
+        // Можно добавить обновление betting_started_at, если оно появилось позже
+        if (!currentRound.betting_started_at && payload.new.betting_started_at) {
+          currentRound.betting_started_at = payload.new.betting_started_at;
+          const startedAt = new Date(currentRound.betting_started_at).getTime();
+          const now = Date.now();
+          const elapsedMs = now - startedAt;
+
+          if (elapsedMs > 0) {
+            startTime = performance.now() - elapsedMs;
+            startAnimationIfNeeded();
+          }
+        }
       }
     })
     .subscribe();
@@ -213,7 +247,7 @@ async function subscribeToActiveRound() {
 function startAnimationIfNeeded() {
   if (!isPlaying && crashPoint) {
     isPlaying = true;
-    startTime = null;
+    if (!startTime) startTime = performance.now();
     currentMultiplier = 1.0;
     cashOutBtn.disabled = false;
     startBetBtn.disabled = true;
@@ -242,7 +276,7 @@ startBetBtn.addEventListener('click', async () => {
     return;
   }
 
-  // Вызываем RPC place_bet, передавая текущий раунд id
+  // Вызов RPC place_bet с двумя параметрами
   const { data, error } = await supabaseClient.rpc('place_bet', { 
     bet_amount: betValue,
     round_id: currentRound.id
