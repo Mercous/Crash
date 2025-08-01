@@ -6,7 +6,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&display=swap" rel="stylesheet" />
   
   <style>
-    * {
+   * {
   box-sizing: border-box;
 }
 body {
@@ -17,11 +17,294 @@ body {
   user-select: none;
   display: flex;
   justify-content: center;
-  padding: 20px;
+  padding: 40px 20px;
   min-height: 100vh;
   flex-direction: column;
   align-items: center;
 }
+
+/* Основной контейнер для игры */
+.container {
+  display: flex;
+  gap: 30px;
+  width: 1200px;
+  max-width: 95vw;
+  user-select: none;
+}
+
+/* Левая панель — текущие ставки */
+.players-bets {
+  width: 320px;
+  background: #222;
+  border-radius: 12px;
+  padding: 20px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 0 20px rgba(74, 170, 255, 0.6);
+}
+.players-bets-title {
+  font-weight: 700;
+  font-size: 20px;
+  color: #4af;
+  margin-bottom: 20px;
+  text-align: center;
+  letter-spacing: 1.2px;
+  text-shadow: 0 0 8px #4af;
+}
+#players-bets-list {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.player-bet {
+  background: #333;
+  border-radius: 8px;
+  padding: 12px 16px;
+  display: flex;
+  justify-content: space-between;
+  font-weight: 600;
+  font-size: 15px;
+  color: #aaf;
+  box-shadow: inset 0 0 8px #4af;
+  transition: background-color 0.3s ease;
+}
+.player-bet:hover {
+  background-color: #4af;
+  color: #121212;
+  cursor: default;
+}
+
+/* Центральный блок — игра и таймер */
+.game-board {
+  flex: 1;
+  background: #1f1f1f;
+  border-radius: 16px;
+  padding: 40px 30px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: 0 0 30px rgba(74, 170, 255, 0.5);
+  user-select: none;
+}
+
+/* Заголовок ожидания ставок */
+.waiting-text {
+  font-size: 48px;
+  font-weight: 900;
+  color: #4af;
+  text-shadow: 0 0 25px #4af, 0 0 40px #4af;
+  margin-bottom: 10px;
+  text-align: center;
+  user-select: none;
+}
+.sub-text {
+  font-size: 22px;
+  color: #7bb3ff;
+  text-shadow: 0 0 15px #7bb3ff;
+  margin-bottom: 30px;
+  text-align: center;
+  user-select: none;
+}
+
+/* Таймер крупный и яркий */
+#betting-timer {
+  font-size: 48px;
+  font-weight: 700;
+  color: #4af;
+  text-align: center;
+  margin-bottom: 30px;
+  text-shadow: 0 0 20px #4af;
+  user-select: none;
+}
+
+/* График */
+#graph {
+  flex: 1;
+  width: 100%;
+  background: #111;
+  border-radius: 16px;
+  position: relative;
+  box-shadow: inset 0 0 20px #4af;
+}
+
+/* Панель управления ставками */
+.bet-controls {
+  margin-top: 30px;
+  width: 100%;
+  max-width: 500px;
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+}
+input#bet-amount {
+  flex: 1;
+  padding: 18px 24px;
+  font-size: 18px;
+  border-radius: 12px;
+  border: none;
+  background: #222;
+  color: #eee;
+  font-weight: 700;
+  box-shadow: inset 0 0 12px #4af;
+  transition: box-shadow 0.3s ease;
+  user-select: text;
+}
+input#bet-amount:focus {
+  outline: none;
+  box-shadow: 0 0 18px #66b3ff;
+}
+button {
+  padding: 18px 40px;
+  font-weight: 700;
+  font-size: 18px;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background-color 0.3s, box-shadow 0.3s;
+  user-select: none;
+  box-shadow: 0 0 15px #4af;
+}
+.bet-button {
+  background-color: #4af;
+  color: #121212;
+}
+.bet-button:hover:not(:disabled) {
+  background-color: #66b3ff;
+  box-shadow: 0 0 25px #66b3ff;
+}
+.cashout-button {
+  background-color: #4caf50;
+  color: white;
+  box-shadow: 0 0 15px #4caf50;
+}
+.cashout-button:disabled {
+  background-color: #666;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+.cashout-button:hover:not(:disabled) {
+  background-color: #66ff66;
+  box-shadow: 0 0 25px #66ff66;
+}
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Правая панель — профиль игрока */
+.player-profile {
+  width: 320px;
+  background: #222;
+  border-radius: 12px;
+  padding: 25px 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  color: #ccc;
+  box-shadow: 0 0 20px rgba(74, 170, 255, 0.6);
+  user-select: none;
+}
+.profile-header {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  font-weight: 700;
+  font-size: 22px;
+  color: #4af;
+  text-shadow: 0 0 15px #4af;
+}
+.avatar {
+  font-size: 52px;
+  background: #4af;
+  color: #121212;
+  border-radius: 50%;
+  width: 64px;
+  height: 64px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  user-select: none;
+}
+.logout-btn {
+  padding: 8px 16px;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  border: none;
+  border-radius: 8px;
+  background-color: #4af;
+  color: #121212;
+  align-self: flex-start;
+  box-shadow: 0 0 15px #4af;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+.logout-btn:hover {
+  background-color: #66b3ff;
+  box-shadow: 0 0 25px #66b3ff;
+}
+.profile-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  font-size: 17px;
+}
+.stat {
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px solid #333;
+  padding-bottom: 8px;
+  color: #7bb3ff;
+}
+.stat-value {
+  color: #eee;
+  font-weight: 700;
+}
+.recent-bets-title {
+  font-weight: 700;
+  color: #4af;
+  font-size: 18px;
+}
+.recent-bets {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 200px;
+}
+.recent-bet {
+  background: #333;
+  border-radius: 8px;
+  padding: 10px 14px;
+  display: flex;
+  justify-content: space-between;
+  font-weight: 600;
+  font-size: 15px;
+  color: #aaf;
+  box-shadow: inset 0 0 8px #4af;
+}
+
+/* Уведомления */
+.notification {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #4af;
+  color: #121212;
+  padding: 14px 24px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 16px;
+  box-shadow: 0 4px 15px rgba(74, 170, 255, 0.8);
+  user-select: none;
+  opacity: 0.95;
+  z-index: 9999;
+}
+
+/* Скрытые экраны, вкладки и кнопки */
 .screen {
   display: none;
   width: 100%;
@@ -30,7 +313,6 @@ body {
 .screen.active {
   display: block;
 }
-/* === Блок аутентификации с вкладками === */
 .auth-container {
   background: #222;
   padding: 30px 35px;
@@ -41,7 +323,6 @@ body {
   color: #eee;
   font-weight: 600;
   font-size: 16px;
-  user-select: none;
   display: flex;
   flex-direction: column;
 }
@@ -49,7 +330,6 @@ body {
   display: flex;
   margin-bottom: 25px;
   border-bottom: 2px solid #4af;
-  user-select: none;
 }
 .tab {
   flex: 1;
@@ -124,277 +404,7 @@ body {
   background-color: #66b3ff;
   box-shadow: 0 6px 20px rgba(102, 179, 255, 0.9);
 }
-/* === Основной интерфейс игры === */
-.container {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-header {
-  font-size: 24px;
-  font-weight: 700;
-  color: #4af;
-  user-select: none;
-  text-align: center;
-}
-.main-content {
-  display: flex;
-  gap: 20px;
-  height: 480px; /* чуть больше для удобства */
-}
 
-/* Увеличенный и улучшенный блок ставок */
-.players-bets {
-  width: 320px; /* с 280px */
-  background: #222;
-  border-radius: 10px;
-  padding: 20px;
-  overflow-y: auto;
-  user-select: none;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 0 0 15px rgba(74, 170, 255, 0.4);
-}
-.players-bets-title {
-  font-weight: 700;
-  font-size: 18px;
-  color: #4af;
-  margin-bottom: 15px;
-  text-align: center;
-  letter-spacing: 1.2px;
-}
-#players-bets-list {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-.player-bet {
-  background: #333;
-  border-radius: 6px;
-  padding: 8px 12px;
-  display: flex;
-  justify-content: space-between;
-  font-weight: 600;
-  font-size: 14px;
-  color: #aaf;
-  transition: background-color 0.3s;
-}
-.player-bet:hover {
-  background-color: #4af;
-  color: #121212;
-  cursor: default;
-}
-
-/* Контейнер игры с таймером */
-.game-board {
-  flex: 1;
-  background: #1f1f1f;
-  border-radius: 12px;
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  user-select: none;
-  box-shadow: 0 0 20px rgba(74, 170, 255, 0.3);
-}
-.multiplier-display {
-  font-size: 72px; /* увеличил */
-  font-weight: 700;
-  color: #4af;
-  text-align: center;
-  margin-bottom: 20px;
-  letter-spacing: 1.5px;
-  text-shadow: 0 0 15px #4af;
-}
-
-/* Таймер — крупный и яркий */
-#betting-timer {
-  font-size: 36px;
-  font-weight: 700;
-  color: #4af;
-  text-align: center;
-  margin-bottom: 25px;
-  text-shadow: 0 0 12px #4af;
-  user-select: none;
-}
-
-/* График */
-#graph {
-  flex: 1;
-  background: #111;
-  border-radius: 12px;
-  position: relative;
-  box-shadow: inset 0 0 15px #4af;
-}
-
-/* Профиль игрока */
-.player-profile {
-  width: 320px; /* с 280px */
-  background: #222;
-  border-radius: 10px;
-  padding: 20px;
-  user-select: none;
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-  color: #ccc;
-  box-shadow: 0 0 15px rgba(74, 170, 255, 0.4);
-}
-.profile-header {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  font-weight: 700;
-  font-size: 20px;
-  color: #4af;
-}
-.avatar {
-  font-size: 48px;
-  background: #4af;
-  color: #121212;
-  border-radius: 50%;
-  width: 56px;
-  height: 56px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  user-select: none;
-}
-.profile-stats {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  font-size: 16px;
-}
-.stat {
-  display: flex;
-  justify-content: space-between;
-  border-bottom: 1px solid #333;
-  padding-bottom: 6px;
-  color: #aaa;
-}
-.stat-value {
-  color: #eee;
-  font-weight: 700;
-}
-.recent-bets-title {
-  font-weight: 700;
-  color: #4af;
-  margin-top: 10px;
-  font-size: 16px;
-}
-.recent-bets {
-  flex: 1;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.recent-bet {
-  background: #333;
-  border-radius: 6px;
-  padding: 8px 10px;
-  display: flex;
-  justify-content: space-between;
-  font-weight: 600;
-  font-size: 14px;
-  color: #aaf;
-}
-.bet-controls {
-  margin-top: 20px; /* увеличил */
-  display: flex;
-  gap: 15px;
-  max-width: 1200px;
-  margin-left: auto;
-  margin-right: auto;
-  justify-content: center;
-}
-input#bet-amount {
-  flex: 1.5; /* увеличил */
-  padding: 16px 20px;
-  font-size: 18px;
-  border-radius: 8px;
-  border: none;
-  background: #222;
-  color: #eee;
-  font-weight: 600;
-  user-select: text;
-  box-shadow: inset 0 0 8px #4af;
-  transition: box-shadow 0.3s;
-}
-input#bet-amount:focus {
-  outline: none;
-  box-shadow: 0 0 12px #66b3ff;
-}
-button {
-  padding: 16px 36px; /* увеличил */
-  font-weight: 700;
-  font-size: 18px;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: background-color 0.25s, box-shadow 0.25s;
-  user-select: none;
-}
-.bet-button {
-  background-color: #4af;
-  color: #121212;
-  box-shadow: 0 4px 15px rgba(74, 170, 255, 0.7);
-}
-.bet-button:hover:not(:disabled) {
-  background-color: #66b3ff;
-  box-shadow: 0 6px 20px rgba(102, 179, 255, 0.9);
-}
-.cashout-button {
-  background-color: #4CAF50;
-  color: white;
-}
-.cashout-button:disabled {
-  background-color: #666;
-  cursor: not-allowed;
-}
-.cashout-button:hover:not(:disabled) {
-  background-color: #66ff66;
-}
-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-/* Уведомления */
-.notification {
-  position: fixed;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #4af;
-  color: #121212;
-  padding: 14px 24px;
-  border-radius: 12px;
-  font-weight: 700;
-  font-size: 16px;
-  box-shadow: 0 4px 15px rgba(74, 170, 255, 0.8);
-  user-select: none;
-  opacity: 0.95;
-  z-index: 9999;
-}
-.logout-btn {
-  padding: 6px 12px; /* чуть больше для удобства */
-  font-weight: 600;
-  font-size: 14px;
-  cursor: pointer;
-  border: none;
-  border-radius: 6px;
-  background-color: #4af;
-  color: #121212;
-  align-self: flex-start;
-  width: max-content;
-  box-shadow: 0 2px 6px rgba(74, 170, 255, 0.7);
-  transition: background-color 0.3s ease, box-shadow 0.3s ease;
-}
-.logout-btn:hover {
-  background-color: #66b3ff;
-  box-shadow: 0 4px 12px rgba(102, 179, 255, 0.9);
-}
 
   </style>
 </head>
