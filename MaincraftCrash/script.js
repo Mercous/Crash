@@ -488,7 +488,7 @@ async function endGame() {
 
   currentRound = null;
   crashPoint = null;
-
+  playersBetsList.innerHTML = '<div>Раунд завершён</div>';  // Очистка списка ставок
   await loadBetHistory();
   await loadCurrentPlayersBets();
 }
