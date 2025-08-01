@@ -478,15 +478,11 @@ async function endGame(cashedOut) {
     console.error('Ошибка вызова finish_crash_round:', e);
   }
 
-  // Обнуляем текущий раунд, чтобы можно было начать новый
   currentRound = null;
   crashPoint = null;
 
-  // Обновляем UI
   await loadBetHistory();
   await loadCurrentPlayersBets();
-
-  // Здесь можно сразу инициировать создание нового раунда или ждать сервер
 }
 
 
