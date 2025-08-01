@@ -140,6 +140,7 @@ function resetGameStateForNewRound() {
   currentMultiplier = 1.0;
   startTime = null;
   currentX = 0;
+
   drawGraph(1, crashPoint || 10);
 
   bettingTimer.textContent = '';
@@ -174,7 +175,7 @@ function startBettingCountdown(startedAt) {
 
 // Запуск анимации, если раунд есть и не играет
 function startAnimationIfNeeded() {
-  if (!isPlaying && crashPoint) {
+  if (!isPlaying && crashPoint && currentRound && !currentRound.ended_at) {
     isPlaying = true;
     if (!startTime) startTime = performance.now();
     currentMultiplier = 1.0;
@@ -249,6 +250,7 @@ async function subscribeToActiveRound() {
 
   // Подписка на изменения в таблице rounds через канал
   const channel = supabaseClient.channel('public:rounds')
+    // Новый раунд появился
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'rounds' }, payload => {
       currentRound = payload.new;
       crashPoint = currentRound.crash_multiplier;
@@ -282,16 +284,23 @@ async function subscribeToActiveRound() {
         betAmount.disabled = false;
       }
     })
+    // Обновление раунда
     .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'rounds' }, payload => {
-      if (currentRound && payload.new.id === currentRound.id) {
-        if (payload.new.ended_at) {
-          console.log('Раунд завершён:', payload.new);
+      const updatedRound = payload.new;
+
+      if (currentRound && updatedRound.id === currentRound.id) {
+        // Раунд завершён
+        if (updatedRound.ended_at) {
+          console.log('Раунд завершён:', updatedRound);
+          crashPoint = updatedRound.crash_multiplier;
+          endGame(false);  // краш — никто не кэш-аутился
           currentRound = null;
-          crashPoint = null;
-          endGame(false);
+          return;
         }
-        if (!currentRound.betting_started_at && payload.new.betting_started_at) {
-          currentRound.betting_started_at = payload.new.betting_started_at;
+
+        // Начало приёма ставок
+        if (!currentRound.betting_started_at && updatedRound.betting_started_at) {
+          currentRound.betting_started_at = updatedRound.betting_started_at;
           const startedAt = new Date(currentRound.betting_started_at).getTime();
           const now = Date.now();
           const elapsedMs = now - startedAt;
@@ -309,7 +318,17 @@ async function subscribeToActiveRound() {
             startAnimationIfNeeded();
           }
         }
+
         loadCurrentPlayersBets();
+      }
+    })
+    // Раунд удалён (если нужно)
+    .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'rounds' }, payload => {
+      if (currentRound && payload.old.id === currentRound.id) {
+        console.log('Раунд удалён:', payload.old);
+        endGame(false);
+        currentRound = null;
+        crashPoint = null;
       }
     });
 
@@ -334,6 +353,10 @@ startBetBtn.addEventListener('click', async () => {
     return;
   }
 
+  // Блокируем кнопку и поле ставки, чтобы не нажали несколько раз
+  startBetBtn.disabled = true;
+  betAmount.disabled = true;
+
   // Вызываем place_bet без round_id — сервер сам создаст раунд, если нужно
   const { data, error } = await supabaseClient.rpc('place_bet', { 
     bet_amount: betValue
@@ -341,6 +364,8 @@ startBetBtn.addEventListener('click', async () => {
 
   if (error) {
     alert('Ошибка старта ставки: ' + error.message);
+    startBetBtn.disabled = false;
+    betAmount.disabled = false;
     return;
   }
 
@@ -426,12 +451,20 @@ async function endGame(cashedOut) {
 
   if (!cashedOut && betValue > 0) {
     showNotification(`Краш! Вы проиграли ${betValue} алмазов (краш на ${crashPoint?.toFixed(2)}x)`);
+  } else if (cashedOut) {
+    showNotification(`Вы забрали выигрыш!`);
   }
 
   multiplierDisplay.textContent = '1.00x';
   drawGraph(1, 10);
 
   betValue = 0;
+
+  clearInterval(bettingCountdownInterval);
+  bettingTimer.textContent = '';
+
+  currentRound = null;
+  crashPoint = null;
 
   await loadBetHistory();
   await loadCurrentPlayersBets();
