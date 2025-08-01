@@ -545,12 +545,10 @@ function updateProfileStats(bets) {
 async function loadBetHistory() {
   if (!window.currentUser) return;
 
+  // Получаем ставки пользователя
   const { data: bets, error } = await supabaseClient
     .from('bets')
-    .select(`
-      *,
-      round:rounds(ended_at)
-    `)
+    .select('*')
     .eq('user_id', window.currentUser.id)
     .order('created_at', { ascending: false })
     .limit(20);
@@ -560,11 +558,31 @@ async function loadBetHistory() {
     return;
   }
 
-  const finishedBets = bets.filter(bet => bet.round?.ended_at !== null);
+  // Получаем раунды по round_id из ставок
+  const roundIds = [...new Set(bets.map(bet => bet.round_id).filter(id => id))];
+
+  const { data: rounds, error: roundsError } = await supabaseClient
+    .from('rounds')
+    .select('id, ended_at')
+    .in('id', roundIds);
+
+  if (roundsError) {
+    console.error('Ошибка загрузки раундов:', roundsError);
+    return;
+  }
+
+  const roundsMap = {};
+  rounds.forEach(r => {
+    roundsMap[r.id] = r.ended_at;
+  });
+
+  // Фильтруем ставки по завершённым раундам
+  const finishedBets = bets.filter(bet => roundsMap[bet.round_id] !== null && roundsMap[bet.round_id] !== undefined);
 
   renderRecentBets(finishedBets);
   updateProfileStats(finishedBets);
 }
+
 
 // ==================== АВТОРИЗАЦИЯ ====================
 
