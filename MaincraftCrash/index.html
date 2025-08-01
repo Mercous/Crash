@@ -124,6 +124,7 @@ header {
   box-shadow: 0 0 40px rgba(74, 170, 255, 0.5);
   user-select: none;
   position: relative;
+  overflow: hidden; /* добавлено, чтобы содержимое не выходило */
 }
 
 /* Множитель */
@@ -143,7 +144,7 @@ header {
   font-weight: 700;
   color: #4af;
   text-shadow: 0 0 25px #4af;
-  margin-bottom: 35px;
+  margin-bottom: 15px; /* уменьшен отступ */
   user-select: none;
   text-align: center;
   min-height: 60px;
@@ -152,13 +153,16 @@ header {
 
 /* График */
 #graph {
-  flex: 1;
-  width: 100%;
-  max-width: 600px;
+  width: 100% !important;
+  height: auto !important;
+  max-height: 220px;
   background: linear-gradient(135deg, #0a0a0a 0%, #151515 100%);
   border-radius: 20px;
   box-shadow: inset 0 0 25px #4af;
   border: 2px solid #4af;
+  display: block;
+  margin-top: 15px;
+  flex: none; /* чтобы не растягивался */
 }
 
 /* Панель управления ставками */
