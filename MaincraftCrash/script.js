@@ -466,6 +466,18 @@ async function endGame(cashedOut) {
   clearInterval(bettingCountdownInterval);
   bettingTimer.textContent = '';
 
+  // Завершаем раунд в базе
+  try {
+    const { data, error } = await supabaseClient.rpc('finish_crash_round');
+    if (error) {
+      console.error('Ошибка при завершении раунда:', error);
+    } else {
+      console.log('Раунд успешно завершён');
+    }
+  } catch (e) {
+    console.error('Ошибка вызова finish_crash_round:', e);
+  }
+
   // Обнуляем текущий раунд, чтобы можно было начать новый
   currentRound = null;
   crashPoint = null;
@@ -476,6 +488,7 @@ async function endGame(cashedOut) {
 
   // Здесь можно сразу инициировать создание нового раунда или ждать сервер
 }
+
 
 
 // Уведомления
