@@ -7,363 +7,395 @@
   
   <style>
     * {
-      box-sizing: border-box;
-    }
-    body {
-      margin: 0;
-      background-color: #121212;
-      color: #eee;
-      font-family: 'Montserrat', sans-serif;
-      user-select: none;
-      display: flex;
-      justify-content: center;
-      padding: 20px;
-      min-height: 100vh;
-      flex-direction: column;
-      align-items: center;
-    }
-    .screen {
-      display: none;
-      width: 100%;
-      max-width: 1200px;
-    }
-    .screen.active {
-      display: block;
-    }
-    /* === Блок аутентификации с вкладками === */
-    .auth-container {
-      background: #222;
-      padding: 30px 35px;
-      border-radius: 12px;
-      width: 360px;
-      margin: 40px auto 30px;
-      box-shadow: 0 0 20px rgba(74, 170, 255, 0.7);
-      color: #eee;
-      font-weight: 600;
-      font-size: 16px;
-      user-select: none;
-      display: flex;
-      flex-direction: column;
-    }
-    .auth-tabs {
-      display: flex;
-      margin-bottom: 25px;
-      border-bottom: 2px solid #4af;
-      user-select: none;
-    }
-    .tab {
-      flex: 1;
-      padding: 12px 0;
-      text-align: center;
-      cursor: pointer;
-      font-weight: 700;
-      font-size: 18px;
-      color: #aaa;
-      border-bottom: 3px solid transparent;
-      transition: color 0.3s, border-color 0.3s;
-    }
-    .tab.active {
-      color: #4af;
-      border-color: #4af;
-      cursor: default;
-    }
-    .auth-form {
-      display: none;
-      flex-direction: column;
-      gap: 15px;
-    }
-    .auth-form.active {
-      display: flex;
-    }
-    .auth-form input {
-      width: 100%;
-      padding: 12px 16px;
-      border: none;
-      border-radius: 8px;
-      background: #121212;
-      color: #eee;
-      font-size: 16px;
-      font-weight: 600;
-      transition: background-color 0.3s, box-shadow 0.3s;
-      user-select: text;
-      box-sizing: border-box;
-    }
-    .auth-form input::placeholder {
-      color: #666;
-      font-weight: 500;
-    }
-    .auth-form input:focus {
-      outline: none;
-      background: #1a1a1a;
-      box-shadow: 0 0 10px #4af;
-    }
-    .auth-buttons {
-      display: flex;
-      gap: 15px;
-      justify-content: center;
-    }
-    .btn {
-      flex: 1;
-      padding: 14px 0;
-      border-radius: 8px;
-      font-weight: 700;
-      font-size: 16px;
-      cursor: pointer;
-      user-select: none;
-      border: none;
-      transition: background-color 0.3s, color 0.3s;
-      box-sizing: border-box;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-    }
-    .btn.primary {
-      background-color: #4af;
-      color: #121212;
-      box-shadow: 0 4px 15px rgba(74, 170, 255, 0.7);
-    }
-    .btn.primary:hover {
-      background-color: #66b3ff;
-      box-shadow: 0 6px 20px rgba(102, 179, 255, 0.9);
-    }
-    /* === Основной интерфейс игры === */
-    .container {
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-    }
-    header {
-      font-size: 24px;
-      font-weight: 700;
-      color: #4af;
-      user-select: none;
-      text-align: center;
-    }
-    .main-content {
-      display: flex;
-      gap: 20px;
-      height: 450px;
-    }
-    .players-bets {
-      width: 280px;
-      background: #222;
-      border-radius: 10px;
-      padding: 15px;
-      overflow-y: auto;
-      user-select: none;
-      display: flex;
-      flex-direction: column;
-    }
-    .players-bets-title {
-      font-weight: 700;
-      font-size: 18px;
-      color: #4af;
-      margin-bottom: 15px;
-      text-align: center;
-      letter-spacing: 1.2px;
-    }
-    #players-bets-list {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-    .player-bet {
-      background: #333;
-      border-radius: 6px;
-      padding: 8px 12px;
-      display: flex;
-      justify-content: space-between;
-      font-weight: 600;
-      font-size: 14px;
-      color: #aaf;
-      transition: background-color 0.3s;
-    }
-    .player-bet:hover {
-      background-color: #4af;
-      color: #121212;
-      cursor: default;
-    }
-    .game-board {
-      flex: 1;
-      background: #1f1f1f;
-      border-radius: 12px;
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      user-select: none;
-    }
-    .multiplier-display {
-      font-size: 64px;
-      font-weight: 700;
-      color: #4af;
-      text-align: center;
-      margin-bottom: 15px;
-      letter-spacing: 1.5px;
-    }
-    #graph {
-      flex: 1;
-      background: #111;
-      border-radius: 12px;
-      position: relative;
-    }
-    .player-profile {
-      width: 280px;
-      background: #222;
-      border-radius: 10px;
-      padding: 20px;
-      user-select: none;
-      display: flex;
-      flex-direction: column;
-      gap: 15px;
-      color: #ccc;
-    }
-    .profile-header {
-      display: flex;
-      align-items: center;
-      gap: 15px;
-      font-weight: 700;
-      font-size: 20px;
-      color: #4af;
-    }
-    .avatar {
-      font-size: 48px;
-      background: #4af;
-      color: #121212;
-      border-radius: 50%;
-      width: 56px;
-      height: 56px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      user-select: none;
-    }
-    .profile-stats {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      font-size: 16px;
-    }
-    .stat {
-      display: flex;
-      justify-content: space-between;
-      border-bottom: 1px solid #333;
-      padding-bottom: 6px;
-      color: #aaa;
-    }
-    .stat-value {
-      color: #eee;
-      font-weight: 700;
-    }
-    .recent-bets-title {
-      font-weight: 700;
-      color: #4af;
-      margin-top: 10px;
-      font-size: 16px;
-    }
-    .recent-bets {
-      flex: 1;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-    .recent-bet {
-      background: #333;
-      border-radius: 6px;
-      padding: 8px 10px;
-      display: flex;
-      justify-content: space-between;
-      font-weight: 600;
-      font-size: 14px;
-      color: #aaf;
-    }
-    .bet-controls {
-      margin-top: 10px;
-      display: flex;
-      gap: 15px;
-      max-width: 1200px;
-      margin-left: auto;
-      margin-right: auto;
-    }
-    input#bet-amount {
-      flex: 1;
-      padding: 15px;
-      font-size: 16px;
-      border-radius: 8px;
-      border: none;
-      background: #222;
-      color: #eee;
-      font-weight: 600;
-      user-select: text;
-    }
-    button {
-      padding: 15px 30px;
-      font-weight: 700;
-      font-size: 16px;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: background-color 0.25s;
-      user-select: none;
-    }
-    .bet-button {
-      background-color: #4af;
-      color: #121212;
-      box-shadow: 0 4px 15px rgba(74, 170, 255, 0.7);
-    }
-    .bet-button:hover:not(:disabled) {
-      background-color: #66b3ff;
-    }
-    .cashout-button {
-      background-color: #4CAF50;
-      color: white;
-    }
-    .cashout-button:disabled {
-      background-color: #666;
-      cursor: not-allowed;
-    }
-    .cashout-button:hover:not(:disabled) {
-      background-color: #66ff66;
-    }
-    button:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-    /* Уведомления */
-    .notification {
-      position: fixed;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: #4af;
-      color: #121212;
-      padding: 14px 24px;
-      border-radius: 12px;
-      font-weight: 700;
-      font-size: 16px;
-      box-shadow: 0 4px 15px rgba(74, 170, 255, 0.8);
-      user-select: none;
-      opacity: 0.95;
-      z-index: 9999;
-    }
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  background-color: #121212;
+  color: #eee;
+  font-family: 'Montserrat', sans-serif;
+  user-select: none;
+  display: flex;
+  justify-content: center;
+  padding: 20px;
+  min-height: 100vh;
+  flex-direction: column;
+  align-items: center;
+}
+.screen {
+  display: none;
+  width: 100%;
+  max-width: 1200px;
+}
+.screen.active {
+  display: block;
+}
+/* === Блок аутентификации с вкладками === */
+.auth-container {
+  background: #222;
+  padding: 30px 35px;
+  border-radius: 12px;
+  width: 360px;
+  margin: 40px auto 30px;
+  box-shadow: 0 0 20px rgba(74, 170, 255, 0.7);
+  color: #eee;
+  font-weight: 600;
+  font-size: 16px;
+  user-select: none;
+  display: flex;
+  flex-direction: column;
+}
+.auth-tabs {
+  display: flex;
+  margin-bottom: 25px;
+  border-bottom: 2px solid #4af;
+  user-select: none;
+}
+.tab {
+  flex: 1;
+  padding: 12px 0;
+  text-align: center;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 18px;
+  color: #aaa;
+  border-bottom: 3px solid transparent;
+  transition: color 0.3s, border-color 0.3s;
+}
+.tab.active {
+  color: #4af;
+  border-color: #4af;
+  cursor: default;
+}
+.auth-form {
+  display: none;
+  flex-direction: column;
+  gap: 15px;
+}
+.auth-form.active {
+  display: flex;
+}
+.auth-form input {
+  width: 100%;
+  padding: 12px 16px;
+  border: none;
+  border-radius: 8px;
+  background: #121212;
+  color: #eee;
+  font-size: 16px;
+  font-weight: 600;
+  transition: background-color 0.3s, box-shadow 0.3s;
+  user-select: text;
+  box-sizing: border-box;
+}
+.auth-form input::placeholder {
+  color: #666;
+  font-weight: 500;
+}
+.auth-form input:focus {
+  outline: none;
+  background: #1a1a1a;
+  box-shadow: 0 0 10px #4af;
+}
+.auth-buttons {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+}
+.btn {
+  flex: 1;
+  padding: 14px 0;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 16px;
+  cursor: pointer;
+  user-select: none;
+  border: none;
+  transition: background-color 0.3s, color 0.3s;
+  box-sizing: border-box;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+.btn.primary {
+  background-color: #4af;
+  color: #121212;
+  box-shadow: 0 4px 15px rgba(74, 170, 255, 0.7);
+}
+.btn.primary:hover {
+  background-color: #66b3ff;
+  box-shadow: 0 6px 20px rgba(102, 179, 255, 0.9);
+}
+/* === Основной интерфейс игры === */
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+header {
+  font-size: 24px;
+  font-weight: 700;
+  color: #4af;
+  user-select: none;
+  text-align: center;
+}
+.main-content {
+  display: flex;
+  gap: 20px;
+  height: 480px; /* чуть больше для удобства */
+}
+
+/* Увеличенный и улучшенный блок ставок */
+.players-bets {
+  width: 320px; /* с 280px */
+  background: #222;
+  border-radius: 10px;
+  padding: 20px;
+  overflow-y: auto;
+  user-select: none;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 0 15px rgba(74, 170, 255, 0.4);
+}
+.players-bets-title {
+  font-weight: 700;
+  font-size: 18px;
+  color: #4af;
+  margin-bottom: 15px;
+  text-align: center;
+  letter-spacing: 1.2px;
+}
+#players-bets-list {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.player-bet {
+  background: #333;
+  border-radius: 6px;
+  padding: 8px 12px;
+  display: flex;
+  justify-content: space-between;
+  font-weight: 600;
+  font-size: 14px;
+  color: #aaf;
+  transition: background-color 0.3s;
+}
+.player-bet:hover {
+  background-color: #4af;
+  color: #121212;
+  cursor: default;
+}
+
+/* Контейнер игры с таймером */
+.game-board {
+  flex: 1;
+  background: #1f1f1f;
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  user-select: none;
+  box-shadow: 0 0 20px rgba(74, 170, 255, 0.3);
+}
+.multiplier-display {
+  font-size: 72px; /* увеличил */
+  font-weight: 700;
+  color: #4af;
+  text-align: center;
+  margin-bottom: 20px;
+  letter-spacing: 1.5px;
+  text-shadow: 0 0 15px #4af;
+}
+
+/* Таймер — крупный и яркий */
+#betting-timer {
+  font-size: 36px;
+  font-weight: 700;
+  color: #4af;
+  text-align: center;
+  margin-bottom: 25px;
+  text-shadow: 0 0 12px #4af;
+  user-select: none;
+}
+
+/* График */
+#graph {
+  flex: 1;
+  background: #111;
+  border-radius: 12px;
+  position: relative;
+  box-shadow: inset 0 0 15px #4af;
+}
+
+/* Профиль игрока */
+.player-profile {
+  width: 320px; /* с 280px */
+  background: #222;
+  border-radius: 10px;
+  padding: 20px;
+  user-select: none;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  color: #ccc;
+  box-shadow: 0 0 15px rgba(74, 170, 255, 0.4);
+}
+.profile-header {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  font-weight: 700;
+  font-size: 20px;
+  color: #4af;
+}
+.avatar {
+  font-size: 48px;
+  background: #4af;
+  color: #121212;
+  border-radius: 50%;
+  width: 56px;
+  height: 56px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  user-select: none;
+}
+.profile-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 16px;
+}
+.stat {
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px solid #333;
+  padding-bottom: 6px;
+  color: #aaa;
+}
+.stat-value {
+  color: #eee;
+  font-weight: 700;
+}
+.recent-bets-title {
+  font-weight: 700;
+  color: #4af;
+  margin-top: 10px;
+  font-size: 16px;
+}
+.recent-bets {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.recent-bet {
+  background: #333;
+  border-radius: 6px;
+  padding: 8px 10px;
+  display: flex;
+  justify-content: space-between;
+  font-weight: 600;
+  font-size: 14px;
+  color: #aaf;
+}
+.bet-controls {
+  margin-top: 20px; /* увеличил */
+  display: flex;
+  gap: 15px;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+  justify-content: center;
+}
+input#bet-amount {
+  flex: 1.5; /* увеличил */
+  padding: 16px 20px;
+  font-size: 18px;
+  border-radius: 8px;
+  border: none;
+  background: #222;
+  color: #eee;
+  font-weight: 600;
+  user-select: text;
+  box-shadow: inset 0 0 8px #4af;
+  transition: box-shadow 0.3s;
+}
+input#bet-amount:focus {
+  outline: none;
+  box-shadow: 0 0 12px #66b3ff;
+}
+button {
+  padding: 16px 36px; /* увеличил */
+  font-weight: 700;
+  font-size: 18px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.25s, box-shadow 0.25s;
+  user-select: none;
+}
+.bet-button {
+  background-color: #4af;
+  color: #121212;
+  box-shadow: 0 4px 15px rgba(74, 170, 255, 0.7);
+}
+.bet-button:hover:not(:disabled) {
+  background-color: #66b3ff;
+  box-shadow: 0 6px 20px rgba(102, 179, 255, 0.9);
+}
+.cashout-button {
+  background-color: #4CAF50;
+  color: white;
+}
+.cashout-button:disabled {
+  background-color: #666;
+  cursor: not-allowed;
+}
+.cashout-button:hover:not(:disabled) {
+  background-color: #66ff66;
+}
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+/* Уведомления */
+.notification {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #4af;
+  color: #121212;
+  padding: 14px 24px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 16px;
+  box-shadow: 0 4px 15px rgba(74, 170, 255, 0.8);
+  user-select: none;
+  opacity: 0.95;
+  z-index: 9999;
+}
 .logout-btn {
-  padding: 4px 10px;           /* уменьшили отступы */
+  padding: 6px 12px; /* чуть больше для удобства */
   font-weight: 600;
   font-size: 14px;
   cursor: pointer;
   border: none;
   border-radius: 6px;
-  background-color: #4af;      /* синий фон в стиле */
+  background-color: #4af;
   color: #121212;
   align-self: flex-start;
-  width: max-content;          /* ширина по содержимому */
+  width: max-content;
   box-shadow: 0 2px 6px rgba(74, 170, 255, 0.7);
   transition: background-color 0.3s ease, box-shadow 0.3s ease;
 }
-
 .logout-btn:hover {
   background-color: #66b3ff;
   box-shadow: 0 4px 12px rgba(102, 179, 255, 0.9);
 }
+
   </style>
 </head>
 <body>
@@ -411,10 +443,11 @@
         </div>
 
         <div class="game-board">
-          <div class="multiplier-display" id="multiplier">1.00x</div>
-          <canvas id="graph" width="600" height="300"></canvas>
-        </div>
-<div id="betting-timer" style="font-size: 24px; text-align: center; margin: 10px 0;"></div>
+  <div class="multiplier-display" id="multiplier">1.00x</div>
+  <div id="betting-timer">Ожидание ставок...</div>
+  <canvas id="graph" width="600" height="300"></canvas>
+</div>
+
 
         <div class="player-profile">
           <div class="profile-header">
