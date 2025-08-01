@@ -11,8 +11,8 @@
 }
 body {
   margin: 0;
-  background-color: #121212;
-  color: #eee;
+  background: linear-gradient(135deg, #001022 0%, #000a14 100%);
+  color: #a0d8ff;
   font-family: 'Montserrat', sans-serif;
   user-select: none;
   display: flex;
@@ -21,6 +21,9 @@ body {
   min-height: 100vh;
   flex-direction: column;
   align-items: center;
+  text-shadow:
+    0 0 3px #007acc,
+    0 0 10px #00aaff;
 }
 
 /* Основной контейнер */
@@ -37,11 +40,16 @@ body {
 header {
   font-size: 28px;
   font-weight: 900;
-  color: #4af;
-  text-shadow: 0 0 20px #4af;
+  color: #3ac6ff;
+  text-shadow:
+    0 0 10px #3ac6ff,
+    0 0 25px #1e90ff,
+    0 0 40px #00bfff;
   margin-bottom: 25px;
   user-select: none;
   text-align: center;
+  letter-spacing: 2px;
+  font-family: 'Minecraft', monospace, 'Montserrat', sans-serif;
 }
 
 /* Основной контент с тремя колонками */
@@ -57,16 +65,18 @@ header {
 /* Левая панель — текущие ставки */
 .players-bets {
   flex: 0 0 320px;
-  background: #222;
+  background: linear-gradient(135deg, #002b4f 0%, #001a33 100%);
   border-radius: 16px;
   padding: 20px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 0 25px rgba(74, 170, 255, 0.6);
-  color: #4af;
+  box-shadow:
+    0 0 15px #3ac6ff,
+    inset 0 0 25px #1e90ff;
+  color: #a0d8ff;
   scrollbar-width: thin;
-  scrollbar-color: #4af transparent;
+  scrollbar-color: #3ac6ff transparent;
 }
 .players-bets::-webkit-scrollbar {
   width: 8px;
@@ -75,7 +85,7 @@ header {
   background: transparent;
 }
 .players-bets::-webkit-scrollbar-thumb {
-  background-color: #4af;
+  background-color: #3ac6ff;
   border-radius: 8px;
   border: 2px solid transparent;
   background-clip: content-box;
@@ -86,7 +96,7 @@ header {
   margin-bottom: 20px;
   text-align: center;
   letter-spacing: 1.2px;
-  text-shadow: 0 0 10px #4af;
+  text-shadow: 0 0 10px #3ac6ff;
 }
 #players-bets-list {
   flex: 1;
@@ -95,60 +105,68 @@ header {
   gap: 12px;
 }
 .player-bet {
-  background: #333;
+  background: linear-gradient(135deg, #003a6b 0%, #00294a 100%);
   border-radius: 12px;
   padding: 14px 18px;
   display: flex;
   justify-content: space-between;
   font-weight: 600;
   font-size: 16px;
-  color: #aaf;
-  box-shadow: inset 0 0 10px #4af;
+  color: #a0d8ff;
+  box-shadow: inset 0 0 15px #3ac6ff;
   transition: background-color 0.3s ease;
 }
 .player-bet:hover {
-  background-color: #4af;
-  color: #121212;
+  background-color: #3ac6ff;
+  color: #001a33;
   cursor: default;
 }
 
 /* Центральный блок — игра и таймер */
 .game-board {
   flex: 1;
-  background: #1f1f1f;
+  background: linear-gradient(135deg, #0a1f3a 0%, #001022 100%);
+  border: 3px solid #3ac6ff;
   border-radius: 20px;
   padding: 40px 35px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  box-shadow: 0 0 40px rgba(74, 170, 255, 0.5);
+  box-shadow:
+    0 0 40px #3ac6ff,
+    inset 0 0 30px #1e90ff;
   user-select: none;
   position: relative;
-  overflow: hidden; /* добавлено, чтобы содержимое не выходило */
+  overflow: hidden;
 }
 
 /* Множитель */
 .multiplier-display {
   font-size: 96px;
   font-weight: 900;
-  color: #4af;
-  text-shadow: 0 0 30px #4af, 0 0 50px #4af;
-  margin-bottom: 25px;
+  color: #00ccff;
+  text-shadow:
+    0 0 8px #3ac6ff,
+    0 0 20px #1e90ff,
+    0 0 40px #00bfff;
+  margin-bottom: 20px;
   user-select: none;
   text-align: center;
+  font-family: 'Minecraft', monospace, 'Montserrat', sans-serif;
 }
 
 /* Таймер */
 #betting-timer {
   font-size: 48px;
   font-weight: 700;
-  color: #4af;
-  text-shadow: 0 0 25px #4af;
-  margin-bottom: 15px; /* уменьшен отступ */
+  color: #66ccff;
+  text-shadow: 0 0 15px #3ac6ff;
+  margin-bottom: 15px;
   user-select: none;
   text-align: center;
   min-height: 60px;
   width: 100%;
+  font-family: 'Montserrat', sans-serif;
 }
 
 /* График */
@@ -156,13 +174,13 @@ header {
   width: 100% !important;
   height: auto !important;
   max-height: 220px;
-  background: linear-gradient(135deg, #0a0a0a 0%, #151515 100%);
   border-radius: 20px;
-  box-shadow: inset 0 0 25px #4af;
-  border: 2px solid #4af;
-  display: block;
+  border: 2px solid #3ac6ff;
+  box-shadow: inset 0 0 20px #3ac6ff;
+  background: linear-gradient(135deg, #001522 0%, #003366 100%);
   margin-top: 15px;
-  flex: none; /* чтобы не растягивался */
+  display: block;
+  flex: none;
 }
 
 /* Панель управления ставками */
@@ -180,12 +198,13 @@ input#bet-amount {
   font-size: 20px;
   border-radius: 14px;
   border: none;
-  background: #222;
-  color: #eee;
+  background: #00294a;
+  color: #a0d8ff;
   font-weight: 700;
-  box-shadow: inset 0 0 15px #4af;
+  box-shadow: inset 0 0 15px #3ac6ff;
   transition: box-shadow 0.3s ease;
   user-select: text;
+  font-family: 'Montserrat', sans-serif;
 }
 input#bet-amount::placeholder {
   color: #7aaaff;
@@ -193,7 +212,7 @@ input#bet-amount::placeholder {
 }
 input#bet-amount:focus {
   outline: none;
-  box-shadow: 0 0 25px #66b3ff;
+  box-shadow: 0 0 25px #66ccff;
 }
 button {
   padding: 18px 48px;
@@ -204,55 +223,55 @@ button {
   cursor: pointer;
   transition: background-color 0.3s, box-shadow 0.3s;
   user-select: none;
-  box-shadow: 0 0 20px #4af;
+  box-shadow: 0 0 20px #3ac6ff;
   text-transform: uppercase;
   letter-spacing: 1.5px;
+  font-family: 'Montserrat', sans-serif;
 }
 .bet-button {
-  background-color: #4af;
-  color: #121212;
+  background: linear-gradient(135deg, #00bfff 0%, #1e90ff 100%);
+  color: #001a33;
+  box-shadow: 0 0 25px #3ac6ff;
 }
 .bet-button:hover:not(:disabled) {
-  background-color: #66b3ff;
-  box-shadow: 0 0 35px #66b3ff;
+  background: linear-gradient(135deg, #1e90ff 0%, #00bfff 100%);
+  box-shadow: 0 0 40px #66ccff;
 }
 .cashout-button {
-  background-color: #4caf50;
-  color: white;
-  box-shadow: 0 0 20px #4caf50;
+  background: linear-gradient(135deg, #00cc66 0%, #009933 100%);
+  color: #e0ffe0;
+  box-shadow: 0 0 25px #00cc66;
 }
 .cashout-button:disabled {
-  background-color: #666;
+  background-color: #444;
   cursor: not-allowed;
   box-shadow: none;
-  opacity: 0.6;
+  opacity: 0.5;
 }
 .cashout-button:hover:not(:disabled) {
-  background-color: #66ff66;
-  box-shadow: 0 0 35px #66ff66;
-}
-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+  background: linear-gradient(135deg, #33ff99 0%, #00cc66 100%);
+  box-shadow: 0 0 40px #66ffbb;
 }
 
 /* Правая панель — профиль игрока */
 .player-profile {
   flex: 0 0 320px;
-  background: #222;
+  background: linear-gradient(135deg, #002b4f 0%, #001a33 100%);
   border-radius: 20px;
   padding: 30px 35px;
   display: flex;
   flex-direction: column;
   gap: 25px;
-  color: #ccc;
-  box-shadow: 0 0 25px rgba(74, 170, 255, 0.6);
+  color: #a0d8ff;
+  box-shadow:
+    0 0 25px #3ac6ff,
+    inset 0 0 25px #1e90ff;
   user-select: none;
   min-height: 480px;
   overflow-y: auto;
   overflow-x: hidden;
   scrollbar-width: thin;
-  scrollbar-color: #4af transparent;
+  scrollbar-color: #3ac6ff transparent;
 }
 .player-profile::-webkit-scrollbar {
   width: 8px;
@@ -261,7 +280,7 @@ button:disabled {
   background: transparent;
 }
 .player-profile::-webkit-scrollbar-thumb {
-  background-color: #4af;
+  background-color: #3ac6ff;
   border-radius: 8px;
   border: 2px solid transparent;
   background-clip: content-box;
@@ -272,13 +291,15 @@ button:disabled {
   gap: 20px;
   font-weight: 700;
   font-size: 24px;
-  color: #4af;
-  text-shadow: 0 0 20px #4af;
+  color: #3ac6ff;
+  text-shadow:
+    0 0 10px #3ac6ff,
+    0 0 25px #1e90ff;
 }
 .avatar {
   font-size: 56px;
-  background: #4af;
-  color: #121212;
+  background: #3ac6ff;
+  color: #001a33;
   border-radius: 50%;
   width: 72px;
   height: 72px;
@@ -286,6 +307,8 @@ button:disabled {
   justify-content: center;
   align-items: center;
   user-select: none;
+  box-shadow:
+    0 0 15px #3ac6ff;
 }
 .profile-info {
   display: flex;
@@ -300,16 +323,16 @@ button:disabled {
   cursor: pointer;
   border: none;
   border-radius: 12px;
-  background-color: #4af;
-  color: #121212;
+  background: linear-gradient(135deg, #00bfff 0%, #1e90ff 100%);
+  color: #001a33;
   align-self: flex-start;
-  box-shadow: 0 0 20px #4af;
+  box-shadow: 0 0 20px #3ac6ff;
   transition: background-color 0.3s ease, box-shadow 0.3s ease;
   user-select: none;
 }
 .logout-btn:hover {
-  background-color: #66b3ff;
-  box-shadow: 0 0 35px #66b3ff;
+  background: linear-gradient(135deg, #1e90ff 0%, #00bfff 100%);
+  box-shadow: 0 0 35px #66ccff;
 }
 .profile-stats {
   display: flex;
@@ -320,19 +343,25 @@ button:disabled {
 .stat {
   display: flex;
   justify-content: space-between;
-  border-bottom: 1px solid #333;
+  border-bottom: 1px solid #003355;
   padding-bottom: 10px;
   color: #7bb3ff;
 }
+.stat span:first-child::after {
+  content: " 💎";
+  margin-left: 6px;
+}
 .stat-value {
-  color: #eee;
+  color: #d0eaff;
   font-weight: 700;
 }
 .recent-bets-title {
   font-weight: 700;
-  color: #4af;
+  color: #3ac6ff;
   font-size: 20px;
   margin-top: 10px;
+  text-shadow:
+    0 0 10px #3ac6ff;
 }
 .recent-bets {
   flex: 1;
@@ -343,20 +372,20 @@ button:disabled {
   max-height: 220px;
 }
 .recent-bet {
-  background: #333;
+  background: linear-gradient(135deg, #003a6b 0%, #00294a 100%);
   border-radius: 12px;
   padding: 12px 16px;
   display: flex;
   justify-content: space-between;
   font-weight: 600;
   font-size: 16px;
-  color: #aaf;
-  box-shadow: inset 0 0 10px #4af;
+  color: #a0d8ff;
+  box-shadow: inset 0 0 10px #3ac6ff;
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 .recent-bet:hover {
-  background-color: #4af;
-  color: #121212;
+  background-color: #3ac6ff;
+  color: #001a33;
   cursor: default;
 }
 
@@ -366,13 +395,13 @@ button:disabled {
   bottom: 20px;
   left: 50%;
   transform: translateX(-50%);
-  background: #4af;
-  color: #121212;
+  background: #3ac6ff;
+  color: #001a33;
   padding: 14px 24px;
   border-radius: 16px;
   font-weight: 700;
   font-size: 16px;
-  box-shadow: 0 4px 20px rgba(74, 170, 255, 0.9);
+  box-shadow: 0 4px 20px rgba(58, 198, 255, 0.9);
   user-select: none;
   opacity: 0.95;
   z-index: 9999;
@@ -388,13 +417,15 @@ button:disabled {
   display: block;
 }
 .auth-container {
-  background: #222;
+  background: linear-gradient(135deg, #002b4f 0%, #001a33 100%);
   padding: 30px 35px;
   border-radius: 16px;
   width: 360px;
   margin: 40px auto 30px;
-  box-shadow: 0 0 25px rgba(74, 170, 255, 0.7);
-  color: #eee;
+  box-shadow:
+    0 0 25px #3ac6ff,
+    inset 0 0 25px #1e90ff;
+  color: #a0d8ff;
   font-weight: 600;
   font-size: 16px;
   display: flex;
@@ -403,7 +434,7 @@ button:disabled {
 .auth-tabs {
   display: flex;
   margin-bottom: 25px;
-  border-bottom: 2px solid #4af;
+  border-bottom: 2px solid #3ac6ff;
 }
 .tab {
   flex: 1;
@@ -412,14 +443,14 @@ button:disabled {
   cursor: pointer;
   font-weight: 700;
   font-size: 18px;
-  color: #aaa;
+  color: #7aaaff;
   border-bottom: 3px solid transparent;
   transition: color 0.3s, border-color 0.3s;
   user-select: none;
 }
 .tab.active {
-  color: #4af;
-  border-color: #4af;
+  color: #3ac6ff;
+  border-color: #3ac6ff;
   cursor: default;
 }
 .auth-form {
@@ -435,8 +466,8 @@ button:disabled {
   padding: 14px 18px;
   border: none;
   border-radius: 12px;
-  background: #121212;
-  color: #eee;
+  background: #001522;
+  color: #a0d8ff;
   font-size: 16px;
   font-weight: 600;
   transition: background-color 0.3s, box-shadow 0.3s;
@@ -444,13 +475,13 @@ button:disabled {
   box-sizing: border-box;
 }
 .auth-form input::placeholder {
-  color: #666;
+  color: #446688;
   font-weight: 500;
 }
 .auth-form input:focus {
   outline: none;
-  background: #1a1a1a;
-  box-shadow: 0 0 12px #4af;
+  background: #003366;
+  box-shadow: 0 0 12px #3ac6ff;
 }
 .auth-buttons {
   display: flex;
@@ -469,15 +500,16 @@ button:disabled {
   transition: background-color 0.3s, color 0.3s;
   box-sizing: border-box;
   box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+  font-family: 'Montserrat', sans-serif;
 }
 .btn.primary {
-  background-color: #4af;
-  color: #121212;
-  box-shadow: 0 4px 20px rgba(74, 170, 255, 0.7);
+  background: linear-gradient(135deg, #3ac6ff 0%, #1e90ff 100%);
+  color: #001a33;
+  box-shadow: 0 4px 20px rgba(58, 198, 255, 0.7);
 }
 .btn.primary:hover {
-  background-color: #66b3ff;
-  box-shadow: 0 6px 25px rgba(102, 179, 255, 0.9);
+  background: linear-gradient(135deg, #1e90ff 0%, #3ac6ff 100%);
+  box-shadow: 0 6px 25px rgba(30, 144, 255, 0.9);
 }
 
   </style>
@@ -535,7 +567,7 @@ button:disabled {
 
         <div class="player-profile">
           <div class="profile-header">
-  <div class="avatar">👤</div>
+  <div class="avatar">💎</div>
   <div class="profile-info">
     <div id="profile-username" class="username">Игрок</div>
     <button id="logout-btn" class="logout-btn">Выйти</button>
