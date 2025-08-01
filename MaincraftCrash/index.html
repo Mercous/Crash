@@ -6,7 +6,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&display=swap" rel="stylesheet" />
   
   <style>
- * {
+* {
   box-sizing: border-box;
 }
 body {
@@ -21,9 +21,8 @@ body {
   min-height: 100vh;
   flex-direction: column;
   align-items: center;
-  text-shadow:
-    0 0 3px #007acc,
-    0 0 10px #00aaff;
+  /* Убрали text-shadow, чтобы не было рамки вокруг текста */
+  text-shadow: none;
 }
 
 /* Основной контейнер */
@@ -41,10 +40,8 @@ header {
   font-size: 28px;
   font-weight: 900;
   color: #3ac6ff;
-  text-shadow:
-    0 0 10px #3ac6ff,
-    0 0 25px #1e90ff,
-    0 0 40px #00bfff;
+  /* Убрали text-shadow, чтобы не было рамки */
+  text-shadow: none;
   margin-bottom: 25px;
   user-select: none;
   text-align: center;
@@ -71,9 +68,9 @@ header {
   overflow-y: auto;
   display: flex;
   flex-direction: column;
+  /* Убрали inset из box-shadow, оставили внешний свет */
   box-shadow:
-    0 0 15px #3ac6ff,
-    inset 0 0 25px #1e90ff;
+    0 0 15px #3ac6ff;
   color: #a0d8ff;
   scrollbar-width: thin;
   scrollbar-color: #3ac6ff transparent;
@@ -96,7 +93,8 @@ header {
   margin-bottom: 20px;
   text-align: center;
   letter-spacing: 1.2px;
-  text-shadow: 0 0 10px #3ac6ff;
+  /* Убрали text-shadow */
+  text-shadow: none;
 }
 #players-bets-list {
   flex: 1;
@@ -113,7 +111,8 @@ header {
   font-weight: 600;
   font-size: 16px;
   color: #a0d8ff;
-  box-shadow: inset 0 0 15px #3ac6ff;
+  /* Убрали inset из box-shadow */
+  box-shadow: none;
   transition: background-color 0.3s ease;
 }
 .player-bet:hover {
@@ -133,8 +132,7 @@ header {
   flex-direction: column;
   align-items: center;
   box-shadow:
-    0 0 40px #3ac6ff,
-    inset 0 0 30px #1e90ff;
+    0 0 40px #3ac6ff;
   user-select: none;
   position: relative;
   overflow: hidden;
@@ -146,10 +144,8 @@ header {
   font-size: 48px; /* уменьшил с 96px */
   font-weight: 900;
   color: #00ccff;
-  text-shadow:
-    0 0 8px #3ac6ff,
-    0 0 20px #1e90ff,
-    0 0 40px #00bfff;
+  /* Убрали text-shadow */
+  text-shadow: none;
   margin-bottom: 10px; /* уменьшил отступ */
   user-select: none;
   text-align: center;
@@ -163,7 +159,8 @@ header {
   font-size: 24px; /* уменьшил с 48px */
   font-weight: 700;
   color: #66ccff;
-  text-shadow: 0 0 15px #3ac6ff;
+  /* Убрали text-shadow */
+  text-shadow: none;
   margin-bottom: 10px; /* уменьшил отступ */
   user-select: none;
   text-align: center;
@@ -187,7 +184,6 @@ header {
   flex-grow: 1; /* чтобы занять оставшееся место */
   object-fit: contain;
 }
-
 
 /* Панель управления ставками */
 .bet-controls {
@@ -269,9 +265,9 @@ button {
   flex-direction: column;
   gap: 25px;
   color: #a0d8ff;
+  /* Убрали inset из box-shadow */
   box-shadow:
-    0 0 25px #3ac6ff,
-    inset 0 0 25px #1e90ff;
+    0 0 25px #3ac6ff;
   user-select: none;
   min-height: 480px;
   overflow-y: auto;
@@ -298,9 +294,8 @@ button {
   font-weight: 700;
   font-size: 24px;
   color: #3ac6ff;
-  text-shadow:
-    0 0 10px #3ac6ff,
-    0 0 25px #1e90ff;
+  /* Убрали text-shadow */
+  text-shadow: none;
 }
 .avatar {
   font-size: 56px;
@@ -366,8 +361,8 @@ button {
   color: #3ac6ff;
   font-size: 20px;
   margin-top: 10px;
-  text-shadow:
-    0 0 10px #3ac6ff;
+  /* Убрали text-shadow */
+  text-shadow: none;
 }
 .recent-bets {
   flex: 1;
@@ -386,7 +381,8 @@ button {
   font-weight: 600;
   font-size: 16px;
   color: #a0d8ff;
-  box-shadow: inset 0 0 10px #3ac6ff;
+  /* Убрали inset из box-shadow */
+  box-shadow: none;
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 .recent-bet:hover {
@@ -429,8 +425,7 @@ button {
   width: 360px;
   margin: 40px auto 30px;
   box-shadow:
-    0 0 25px #3ac6ff,
-    inset 0 0 25px #1e90ff;
+    0 0 25px #3ac6ff;
   color: #a0d8ff;
   font-weight: 600;
   font-size: 16px;
@@ -517,6 +512,7 @@ button {
   background: linear-gradient(135deg, #1e90ff 0%, #3ac6ff 100%);
   box-shadow: 0 6px 25px rgba(30, 144, 255, 0.9);
 }
+
 
   </style>
 </head>
