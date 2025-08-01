@@ -736,8 +736,8 @@ async function logout() {
 checkSession();
 
 // УБРАН setInterval с loadCurrentPlayersBets(), realtime подписка обновит UI сама
-// setInterval(() => {
-//   if (window.currentUser) {
-//     loadCurrentPlayersBets();
-//   }
-// }, 1000);
+ setInterval(() => {
+   if (window.currentUser) {
+     loadCurrentPlayersBets();
+   }
+ }, 1000);
