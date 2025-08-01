@@ -46,7 +46,7 @@ let isPlaying = false;
 let crashPoint = null;
 let betValue = 0;
 let startTime = null;
-
+let cashedOut = false; // <--- Добавлено: флаг кэш-аута
 let currentRound = null; // текущий активный раунд
 
 // Таймер приёма ставок
@@ -376,7 +376,7 @@ startBetBtn.addEventListener('click', async () => {
   const { data: activeRound, error: roundError } = await supabaseClient
     .from('rounds')
     .select('*')
-    .is('ended_at', null)
+    .is('ended_at', null)  // <-- исправлено
     .order('started_at', { ascending: false })
     .limit(1)
     .single();
@@ -432,6 +432,8 @@ cashOutBtn.addEventListener('click', async () => {
     window.currentUser.balance = newBalance;
     balanceDisplay.textContent = newBalance;
 
+    cashedOut = true; // <--- Отмечаем, что игрок забрал ставку
+
     showNotification(`Вы забрали ${profit} алмазов (${currentMultiplier.toFixed(2)}x)`);
 
   } catch (e) {
@@ -482,7 +484,6 @@ async function endGame() {
   await loadBetHistory();
   await loadCurrentPlayersBets();
 }
-
 
 
 
