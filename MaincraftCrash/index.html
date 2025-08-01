@@ -6,7 +6,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&display=swap" rel="stylesheet" />
   
   <style>
-  * {
+ * {
   box-sizing: border-box;
 }
 body {
@@ -56,7 +56,7 @@ header {
 
 /* Левая панель — текущие ставки */
 .players-bets {
-  flex: 0 0 320px; /* фиксированная ширина */
+  flex: 0 0 320px;
   background: #222;
   border-radius: 16px;
   padding: 20px;
@@ -65,6 +65,20 @@ header {
   flex-direction: column;
   box-shadow: 0 0 25px rgba(74, 170, 255, 0.6);
   color: #4af;
+  scrollbar-width: thin;
+  scrollbar-color: #4af transparent;
+}
+.players-bets::-webkit-scrollbar {
+  width: 8px;
+}
+.players-bets::-webkit-scrollbar-track {
+  background: transparent;
+}
+.players-bets::-webkit-scrollbar-thumb {
+  background-color: #4af;
+  border-radius: 8px;
+  border: 2px solid transparent;
+  background-clip: content-box;
 }
 .players-bets-title {
   font-weight: 700;
@@ -100,7 +114,7 @@ header {
 
 /* Центральный блок — игра и таймер */
 .game-board {
-  flex: 1; /* занимает всё свободное место между боковыми панелями */
+  flex: 1;
   background: #1f1f1f;
   border-radius: 20px;
   padding: 40px 35px;
@@ -141,9 +155,10 @@ header {
   flex: 1;
   width: 100%;
   max-width: 600px;
-  background: #111;
+  background: linear-gradient(135deg, #0a0a0a 0%, #151515 100%);
   border-radius: 20px;
   box-shadow: inset 0 0 25px #4af;
+  border: 2px solid #4af;
 }
 
 /* Панель управления ставками */
@@ -167,6 +182,10 @@ input#bet-amount {
   box-shadow: inset 0 0 15px #4af;
   transition: box-shadow 0.3s ease;
   user-select: text;
+}
+input#bet-amount::placeholder {
+  color: #7aaaff;
+  opacity: 0.7;
 }
 input#bet-amount:focus {
   outline: none;
@@ -202,6 +221,7 @@ button {
   background-color: #666;
   cursor: not-allowed;
   box-shadow: none;
+  opacity: 0.6;
 }
 .cashout-button:hover:not(:disabled) {
   background-color: #66ff66;
@@ -214,7 +234,7 @@ button:disabled {
 
 /* Правая панель — профиль игрока */
 .player-profile {
-  flex: 0 0 320px; /* фиксированная ширина */
+  flex: 0 0 320px;
   background: #222;
   border-radius: 20px;
   padding: 30px 35px;
@@ -226,6 +246,21 @@ button:disabled {
   user-select: none;
   min-height: 480px;
   overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: #4af transparent;
+}
+.player-profile::-webkit-scrollbar {
+  width: 8px;
+}
+.player-profile::-webkit-scrollbar-track {
+  background: transparent;
+}
+.player-profile::-webkit-scrollbar-thumb {
+  background-color: #4af;
+  border-radius: 8px;
+  border: 2px solid transparent;
+  background-clip: content-box;
 }
 .profile-header {
   display: flex;
@@ -313,6 +348,12 @@ button:disabled {
   font-size: 16px;
   color: #aaf;
   box-shadow: inset 0 0 10px #4af;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+.recent-bet:hover {
+  background-color: #4af;
+  color: #121212;
+  cursor: default;
 }
 
 /* Уведомления */
@@ -434,7 +475,6 @@ button:disabled {
   background-color: #66b3ff;
   box-shadow: 0 6px 25px rgba(102, 179, 255, 0.9);
 }
-
 
   </style>
 </head>
