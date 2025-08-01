@@ -46,7 +46,7 @@ let isPlaying = false;
 let crashPoint = null;
 let betValue = 0;
 let startTime = null;
-let cashedOut = false; // флаг кэш-аута
+let cashedOut = false; // <--- Добавлено: флаг кэш-аута
 let currentRound = null; // текущий активный раунд
 
 // Таймер приёма ставок
@@ -133,8 +133,6 @@ function animateGame(timestamp) {
 // Сброс состояния при новом раунде
 function resetGameStateForNewRound() {
   isPlaying = false;
-  cashedOut = false;
-  betValue = 0;
   cashOutBtn.disabled = true;
   startBetBtn.disabled = false;
   betAmount.disabled = false;
@@ -189,16 +187,76 @@ function startAnimationIfNeeded() {
   }
 }
 
-// ==================== ПОДПИСКА НА АКТИВНЫЙ РАУНД И СТАВКИ В РЕАЛЬНОМ ВРЕМЕНИ ====================
+// ==================== ПОДПИСКА НА АКТИВНЫЙ РАУНД ====================
 
-async function subscribeToRealtime() {
-  // Подписка на раунды
-  const roundsChannel = supabaseClient.channel('public:rounds')
+async function subscribeToActiveRound() {
+  // Загрузить текущий активный раунд
+  const { data, error } = await supabaseClient
+    .from('rounds')
+    .select('*')
+    .is('ended_at', null)
+    .order('started_at', { ascending: false })
+    .limit(1)
+    .single();
+
+  if (error && error.code !== 'PGRST116') {
+    console.error('Ошибка загрузки активного раунда:', error);
+    return;
+  }
+
+  if (data) {
+    currentRound = data;
+    crashPoint = currentRound.crash_multiplier;
+    console.log('Текущий активный раунд:', currentRound);
+    resetGameStateForNewRound();
+    loadCurrentPlayersBets();
+
+    if (currentRound.betting_started_at) {
+      const startedAt = new Date(currentRound.betting_started_at).getTime();
+      const now = Date.now();
+      const elapsedMs = now - startedAt;
+
+      if (elapsedMs < BETTING_PERIOD_MS) {
+        startBettingCountdown(startedAt);
+        multiplierDisplay.textContent = 'Ожидание ставок...';
+        drawGraph(1, crashPoint);
+        cashOutBtn.disabled = true;
+        startBetBtn.disabled = false;
+        betAmount.disabled = false;
+      } else {
+        bettingTimer.textContent = '';
+        startTime = performance.now() - elapsedMs;
+        startAnimationIfNeeded();
+      }
+    } else {
+      bettingTimer.textContent = 'Ожидание первой ставки...';
+      multiplierDisplay.textContent = '1.00x';
+      drawGraph(1, crashPoint);
+      cashOutBtn.disabled = true;
+      startBetBtn.disabled = false;
+      betAmount.disabled = false;
+    }
+  } else {
+    console.log('Активный раунд не найден, ожидаем появления...');
+    currentRound = null;
+    crashPoint = null;
+    bettingTimer.textContent = 'Ожидание нового раунда...';
+    multiplierDisplay.textContent = '1.00x';
+    drawGraph(1, 10);
+    cashOutBtn.disabled = true;
+    startBetBtn.disabled = false;
+    betAmount.disabled = false;
+  }
+
+  // Подписка на изменения в таблице rounds через канал
+  const channel = supabaseClient.channel('public:rounds')
+    // Новый раунд появился
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'rounds' }, payload => {
       currentRound = payload.new;
       crashPoint = currentRound.crash_multiplier;
       console.log('Новый раунд:', currentRound);
       resetGameStateForNewRound();
+      loadCurrentPlayersBets();
 
       if (currentRound.betting_started_at) {
         const startedAt = new Date(currentRound.betting_started_at).getTime();
@@ -226,6 +284,7 @@ async function subscribeToRealtime() {
         betAmount.disabled = false;
       }
     })
+    // Обновление раунда
     .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'rounds' }, payload => {
       const updatedRound = payload.new;
 
@@ -263,6 +322,7 @@ async function subscribeToRealtime() {
         loadCurrentPlayersBets();
       }
     })
+    // Раунд удалён (если нужно)
     .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'rounds' }, payload => {
       if (currentRound && payload.old.id === currentRound.id) {
         console.log('Раунд удалён:', payload.old);
@@ -272,16 +332,7 @@ async function subscribeToRealtime() {
       }
     });
 
-  await roundsChannel.subscribe();
-
-  // Подписка на ставки
-  const betsChannel = supabaseClient.channel('public:bets')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'bets' }, payload => {
-      // При появлении, обновлении или удалении ставки обновляем список ставок
-      loadCurrentPlayersBets();
-    });
-
-  await betsChannel.subscribe();
+  await channel.subscribe();
 }
 
 // ==================== ОБРАБОТКА СТАВОК ====================
@@ -325,7 +376,7 @@ startBetBtn.addEventListener('click', async () => {
   const { data: activeRound, error: roundError } = await supabaseClient
     .from('rounds')
     .select('*')
-    .is('ended_at', null)
+    .is('ended_at', null)  // <-- исправлено
     .order('started_at', { ascending: false })
     .limit(1)
     .single();
@@ -360,6 +411,7 @@ startBetBtn.addEventListener('click', async () => {
   showNotification(`Ставка ${betValue}◆ принята в раунд #${currentRound?.id || '?'}`);
 });
 
+
 // Забрать выигрыш — вызывает RPC cash_out на сервере
 cashOutBtn.addEventListener('click', async () => {
   if (!isPlaying) return;
@@ -380,7 +432,7 @@ cashOutBtn.addEventListener('click', async () => {
     window.currentUser.balance = newBalance;
     balanceDisplay.textContent = newBalance;
 
-    cashedOut = true; // Отмечаем, что игрок забрал ставку
+    cashedOut = true; // <--- Отмечаем, что игрок забрал ставку
 
     showNotification(`Вы забрали ${profit} алмазов (${currentMultiplier.toFixed(2)}x)`);
 
@@ -392,6 +444,7 @@ cashOutBtn.addEventListener('click', async () => {
 
   // Не останавливаем анимацию, игрок видит её до конца
 });
+
 
 // Завершение игры
 async function endGame() {
@@ -431,6 +484,8 @@ async function endGame() {
   await loadBetHistory();
   await loadCurrentPlayersBets();
 }
+
+
 
 // Уведомления
 function showNotification(message) {
@@ -484,6 +539,7 @@ function updateProfileStats(bets) {
 async function loadBetHistory() {
   if (!window.currentUser) return;
 
+  // Запрос с join по раунду, чтобы получить ended_at
   const { data: bets, error } = await supabaseClient
     .from('bets')
     .select(`
@@ -499,11 +555,13 @@ async function loadBetHistory() {
     return;
   }
 
+  // Фильтруем только ставки из завершённых раундов
   const finishedBets = bets.filter(bet => bet.round?.ended_at !== null);
 
   renderRecentBets(finishedBets);
   updateProfileStats(finishedBets);
 }
+
 
 // Загрузка текущих ставок всех игроков (только для текущего раунда)
 async function loadCurrentPlayersBets() {
@@ -522,7 +580,7 @@ async function loadCurrentPlayersBets() {
       created_at,
       user:users(username)
     `)
-    .eq('round_id', currentRound.id)
+    .eq('round_id', currentRound.id) // Фильтрация по текущему раунду
     .order('created_at', { ascending: false })
     .limit(10);
 
@@ -543,7 +601,7 @@ async function loadCurrentPlayersBets() {
 
 // ==================== АВТОРИЗАЦИЯ ====================
 
-// Регистрация
+// Регистрация через Supabase Auth
 registerBtn.addEventListener('click', async () => {
   const email = regEmailInput.value.trim();
   const password = regPasswordInput.value;
@@ -574,7 +632,13 @@ registerBtn.addEventListener('click', async () => {
 
   const { error: insertError } = await supabaseClient
     .from('users')
-    .insert([{ id: data.user.id, username: username, balance: 1 }]);
+    .insert([
+      {
+        id: data.user.id,
+        username: username,
+        balance: 1
+      }
+    ]);
 
   if (insertError) {
     alert('Ошибка создания профиля: ' + insertError.message);
@@ -590,7 +654,7 @@ registerBtn.addEventListener('click', async () => {
   tabLogin.click();
 });
 
-// Логин
+// Логин через Supabase Auth
 loginBtn.addEventListener('click', async () => {
   const email = loginEmailInput.value.trim();
   const password = loginPasswordInput.value;
@@ -610,7 +674,7 @@ loginBtn.addEventListener('click', async () => {
   await onUserLogin(data.user);
 });
 
-// Проверка сессии
+// При загрузке страницы проверяем сессию
 async function checkSession() {
   const { data: { session } } = await supabaseClient.auth.getSession();
 
@@ -659,8 +723,8 @@ async function onUserLogin(user) {
   await loadBetHistory();
   await loadCurrentPlayersBets();
 
-  // Подписываемся на активный раунд и ставки в реальном времени
-  await subscribeToRealtime();
+  // Подписываемся на активный раунд и обновления
+  await subscribeToActiveRound();
 }
 
 // Показать экран авторизации
@@ -675,7 +739,7 @@ function showGameScreen() {
   gameScreen.classList.add('active');
 }
 
-// Выход
+// Выход из аккаунта
 async function logout() {
   await supabaseClient.auth.signOut();
   window.currentUser = null;
@@ -685,7 +749,7 @@ async function logout() {
 // ==================== ИНИЦИАЛИЗАЦИЯ ====================
 checkSession();
 
-// Обновлять текущие ставки каждую секунду (опционально, можно убрать — есть realtime)
+// Обновлять текущие ставки каждую секунду
 setInterval(() => {
   if (window.currentUser) {
     loadCurrentPlayersBets();
