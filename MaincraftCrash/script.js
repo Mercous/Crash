@@ -85,13 +85,20 @@ function drawGraph(multiplier, crash) {
     const pointProgress = pointX / width;
     const pointY = height - (Math.log(1 + pointProgress * (crash - 1)) / Math.log(crash)) * height;
 
-    ctx.beginPath();
-    ctx.fillStyle = '#4af';
+    // Рисуем эмодзи вместо круга
+    const emoji = '🚀'; // Можно поставить '💎' или любой другой эмодзи
+
+    ctx.font = '28px serif'; // Размер эмодзи, можно подкорректировать
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    // Добавляем свечение
     ctx.shadowColor = '#4af';
     ctx.shadowBlur = 10;
-    ctx.arc(pointX, pointY, 8, 0, 2 * Math.PI);
-    ctx.fill();
-    ctx.shadowBlur = 0;
+
+    ctx.fillText(emoji, pointX, pointY);
+
+    ctx.shadowBlur = 0; // Отключаем тень после рисования эмодзи
   } else {
     ctx.beginPath();
     ctx.strokeStyle = '#f44';
@@ -101,6 +108,7 @@ function drawGraph(multiplier, crash) {
     ctx.stroke();
   }
 }
+
 
 // Анимация игры, синхронизированная с серверным раундом
 function animateGame(timestamp) {
