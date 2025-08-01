@@ -1,4 +1,4 @@
-// Подключение к Supabase
+ // Подключение к Supabase
 const supabaseUrl = 'https://agbbllrqsdwgougtehhc.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFnYmJsbHJxc2R3Z291Z3RlaGhjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM5Mjg4ODQsImV4cCI6MjA2OTUwNDg4NH0.XCPzNuwVbtO-2UCYyOpoYzUUQYnq0HjZEJwEEHxbGNU';
 const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
@@ -288,58 +288,54 @@ async function loadCurrentPlayersBets() {
 // ==================== ПОДПИСКА НА АКТИВНЫЙ РАУНД ====================
 // (оставляем для начальной загрузки, но подписка теперь в subscribeToRealtime, вызывается из onUserLogin)
 
-async function subscribeToActiveRound() {
-  // Загрузить текущий активный раунд
-  const { data, error } = await supabaseClient
-    .from('rounds')
-    .select('*')
-    .is('ended_at', null)
-    .order('started_at', { ascending: false })
-    .limit(1)
-    .single();
+async function subscribeToRealtime() {
+  const roundsChannel = supabaseClient.channel('public:rounds')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'rounds' }, payload => {
+      console.log('Round event:', payload);
+      handleRoundChange(payload);
+    });
 
-  if (error && error.code !== 'PGRST116') {
-    console.error('Ошибка загрузки активного раунда:', error);
-    return;
-  }
+  const betsChannel = supabaseClient.channel('public:bets')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'bets' }, payload => {
+      console.log('Bet event:', payload);
+      loadCurrentPlayersBets();
+    });
 
-  if (data) {
-    currentRound = data;
-    crashPoint = currentRound.crash_multiplier;
-    resetGameStateForNewRound();
-    loadCurrentPlayersBets();
+  await roundsChannel.subscribe();
+  await betsChannel.subscribe();
+}
 
-    if (currentRound.betting_started_at) {
-      const startedAt = new Date(currentRound.betting_started_at).getTime();
-      const now = Date.now();
-      const elapsedMs = now - startedAt;
+function handleRoundChange(payload) {
+  const round = payload.new || payload.old;
 
-      if (elapsedMs < BETTING_PERIOD_MS) {
-        startBettingCountdown(startedAt);
-        multiplierDisplay.textContent = 'Ожидание ставок...';
-        drawGraph(1, crashPoint);
-        cashOutBtn.disabled = true;
-        startBetBtn.disabled = false;
-        betAmount.disabled = false;
-      } else {
-        bettingTimer.textContent = '';
-        startTime = performance.now() - elapsedMs;
-        startAnimationIfNeeded();
-      }
-    } else {
-      bettingTimer.textContent = 'Ожидание первой ставки...';
-      multiplierDisplay.textContent = '1.00x';
+  if (!round) return;
+
+  currentRound = round;
+  crashPoint = round.crash_multiplier;
+
+  resetGameStateForNewRound();
+
+  if (round.betting_started_at) {
+    const startedAt = new Date(round.betting_started_at).getTime();
+    const now = Date.now();
+    const elapsedMs = now - startedAt;
+
+    if (elapsedMs < BETTING_PERIOD_MS) {
+      startBettingCountdown(startedAt);
+      multiplierDisplay.textContent = 'Ожидание ставок...';
       drawGraph(1, crashPoint);
       cashOutBtn.disabled = true;
       startBetBtn.disabled = false;
       betAmount.disabled = false;
+    } else {
+      bettingTimer.textContent = '';
+      startTime = performance.now() - elapsedMs;
+      startAnimationIfNeeded();
     }
   } else {
-    currentRound = null;
-    crashPoint = null;
-    bettingTimer.textContent = 'Ожидание нового раунда...';
+    bettingTimer.textContent = 'Ожидание первой ставки...';
     multiplierDisplay.textContent = '1.00x';
-    drawGraph(1, 10);
+    drawGraph(1, crashPoint);
     cashOutBtn.disabled = true;
     startBetBtn.disabled = false;
     betAmount.disabled = false;
