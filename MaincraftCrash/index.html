@@ -128,7 +128,7 @@ header {
   background: linear-gradient(135deg, #0a1f3a 0%, #001022 100%);
   border: 3px solid #3ac6ff;
   border-radius: 20px;
-  padding: 40px 35px;
+  padding: 20px 25px; /* уменьшил паддинги */
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -138,50 +138,56 @@ header {
   user-select: none;
   position: relative;
   overflow: hidden;
+  height: 100%; /* чтобы занять всю доступную высоту */
+  max-height: 480px; /* ограничение по высоте */
 }
 
-/* Множитель */
 .multiplier-display {
-  font-size: 96px;
+  font-size: 48px; /* уменьшил с 96px */
   font-weight: 900;
   color: #00ccff;
   text-shadow:
     0 0 8px #3ac6ff,
     0 0 20px #1e90ff,
     0 0 40px #00bfff;
-  margin-bottom: 20px;
+  margin-bottom: 10px; /* уменьшил отступ */
   user-select: none;
   text-align: center;
   font-family: 'Minecraft', monospace, 'Montserrat', sans-serif;
+  max-height: 70px; /* ограничение высоты */
+  overflow: hidden;
+  line-height: 1.1;
 }
 
-/* Таймер */
 #betting-timer {
-  font-size: 48px;
+  font-size: 24px; /* уменьшил с 48px */
   font-weight: 700;
   color: #66ccff;
   text-shadow: 0 0 15px #3ac6ff;
-  margin-bottom: 15px;
+  margin-bottom: 10px; /* уменьшил отступ */
   user-select: none;
   text-align: center;
-  min-height: 60px;
+  max-height: 50px; /* ограничение высоты */
+  overflow: hidden;
+  line-height: 1.2;
   width: 100%;
-  font-family: 'Montserrat', sans-serif;
 }
 
-/* График */
+/* График занимает оставшееся место */
 #graph {
   width: 100% !important;
   height: auto !important;
-  max-height: 220px;
+  max-height: 250px;
   border-radius: 20px;
   border: 2px solid #3ac6ff;
   box-shadow: inset 0 0 20px #3ac6ff;
   background: linear-gradient(135deg, #001522 0%, #003366 100%);
-  margin-top: 15px;
+  margin-top: 10px;
   display: block;
-  flex: none;
+  flex-grow: 1; /* чтобы занять оставшееся место */
+  object-fit: contain;
 }
+
 
 /* Панель управления ставками */
 .bet-controls {
