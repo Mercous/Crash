@@ -543,21 +543,29 @@ function updateProfileStats(bets) {
 async function loadBetHistory() {
   if (!window.currentUser) return;
 
+  // Запрос с join по раунду, чтобы получить ended_at
   const { data: bets, error } = await supabaseClient
     .from('bets')
-    .select('*')
+    .select(`
+      *,
+      round:rounds(ended_at)
+    `)
     .eq('user_id', window.currentUser.id)
     .order('created_at', { ascending: false })
-    .limit(10);
+    .limit(20);
 
   if (error) {
     console.error('Ошибка загрузки истории:', error);
     return;
   }
 
-  renderRecentBets(bets);
-  updateProfileStats(bets);
+  // Фильтруем только ставки из завершённых раундов
+  const finishedBets = bets.filter(bet => bet.round?.ended_at !== null);
+
+  renderRecentBets(finishedBets);
+  updateProfileStats(finishedBets);
 }
+
 
 // Загрузка текущих ставок всех игроков (только для текущего раунда)
 async function loadCurrentPlayersBets() {
