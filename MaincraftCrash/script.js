@@ -445,35 +445,33 @@ cashOutBtn.addEventListener('click', async () => {
 
 
 // Завершение игры
-async function endGame(cashedOut) {
+async function endGame() {
   cancelAnimationFrame(gameAnimationFrame);
   isPlaying = false;
   cashOutBtn.disabled = true;
   startBetBtn.disabled = false;
   betAmount.disabled = false;
 
-  if (!cashedOut && betValue > 0) {
-    showNotification(`Краш! Вы проиграли ${betValue} алмазов (краш на ${crashPoint?.toFixed(2)}x)`);
-  } else if (cashedOut) {
-    showNotification(`Вы забрали выигрыш!`);
+  if (betValue > 0) {
+    if (cashedOut) {
+      showNotification(`Краш на ${crashPoint?.toFixed(2)}x. Вы забрали ставку.`);
+    } else {
+      showNotification(`Краш! Вы проиграли ${betValue} алмазов (краш на ${crashPoint?.toFixed(2)}x)`);
+    }
   }
 
   multiplierDisplay.textContent = '1.00x';
   drawGraph(1, 10);
 
   betValue = 0;
+  cashedOut = false; // сбросить флаг на следующий раунд
 
   clearInterval(bettingCountdownInterval);
   bettingTimer.textContent = '';
 
-  // Завершаем раунд в базе
   try {
     const { data, error } = await supabaseClient.rpc('finish_crash_round');
-    if (error) {
-      console.error('Ошибка при завершении раунда:', error);
-    } else {
-      console.log('Раунд успешно завершён');
-    }
+    if (error) console.error('Ошибка завершения раунда:', error);
   } catch (e) {
     console.error('Ошибка вызова finish_crash_round:', e);
   }
@@ -484,6 +482,7 @@ async function endGame(cashedOut) {
   await loadBetHistory();
   await loadCurrentPlayersBets();
 }
+
 
 
 
