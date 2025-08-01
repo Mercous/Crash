@@ -111,7 +111,6 @@ function animateGame(timestamp) {
   currentX = elapsed * speed;
 
   if (!crashPoint) {
-    // Если краш-поинт не известен, останавливаем анимацию
     endGame(false);
     return;
   }
@@ -120,6 +119,7 @@ function animateGame(timestamp) {
     currentMultiplier = crashPoint;
     multiplierDisplay.textContent = currentMultiplier.toFixed(2) + 'x';
     drawGraph(currentMultiplier, crashPoint);
+    // Анимация завершилась — раунд крашнул
     endGame(false);
     return;
   }
@@ -416,7 +416,7 @@ startBetBtn.addEventListener('click', async () => {
 cashOutBtn.addEventListener('click', async () => {
   if (!isPlaying) return;
 
-  cancelAnimationFrame(gameAnimationFrame);
+  cashOutBtn.disabled = true; // сразу блокируем кнопку
 
   try {
     const { data, error } = await supabaseClient.rpc('cash_out', { 
@@ -426,7 +426,7 @@ cashOutBtn.addEventListener('click', async () => {
 
     if (error) throw error;
 
-    const profit = data[0].profit;
+    const profit = data[0].profit_amount;
     const newBalance = data[0].new_balance;
 
     window.currentUser.balance = newBalance;
@@ -436,10 +436,13 @@ cashOutBtn.addEventListener('click', async () => {
 
   } catch (e) {
     alert('Ошибка при выводе выигрыша: ' + e.message);
+    cashOutBtn.disabled = false; // разблокируем кнопку при ошибке
+    return;
   }
 
-  endGame(true);
+  // Не останавливаем анимацию, игрок видит её до конца
 });
+
 
 // Завершение игры
 async function endGame(cashedOut) {
@@ -463,12 +466,17 @@ async function endGame(cashedOut) {
   clearInterval(bettingCountdownInterval);
   bettingTimer.textContent = '';
 
+  // Обнуляем текущий раунд, чтобы можно было начать новый
   currentRound = null;
   crashPoint = null;
 
+  // Обновляем UI
   await loadBetHistory();
   await loadCurrentPlayersBets();
+
+  // Здесь можно сразу инициировать создание нового раунда или ждать сервер
 }
+
 
 // Уведомления
 function showNotification(message) {
