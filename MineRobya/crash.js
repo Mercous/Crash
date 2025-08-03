@@ -26,7 +26,7 @@ const supabaseClient = window.supabaseClient;
   let cashedOut = false;
   let currentRound = null;
 
-  const BETTING_PERIOD_MS = 10 * 1000;
+  const BETTING_PERIOD_MS = 30 * 1000; 
   let bettingCountdownInterval = null;
   let currentX = 0;
   const speed = 100;
@@ -111,23 +111,28 @@ const supabaseClient = window.supabaseClient;
     loadBetHistory();
   }
 
-  function startBettingCountdown(startedAt) {
-    clearInterval(bettingCountdownInterval);
-    function updateTimer() {
-      const now = Date.now();
-      const elapsed = now - startedAt;
-      const remaining = BETTING_PERIOD_MS - elapsed;
-      if (remaining <= 0) {
-        clearInterval(bettingCountdownInterval);
-        bettingTimer.textContent = '';
-        startAnimationIfNeeded();
-      } else {
-        bettingTimer.textContent = `Приём ставок: ${(remaining / 1000).toFixed(1)} сек.`;
-      }
+
+function startBettingCountdown(startedAt, durationMs = BETTING_PERIOD_MS) {
+  clearInterval(bettingCountdownInterval);
+  
+  function updateTimer() {
+    const now = Date.now();
+    const elapsed = now - startedAt;
+    const remaining = durationMs - elapsed;
+    
+    if (remaining <= 0) {
+      clearInterval(bettingCountdownInterval);
+      bettingTimer.textContent = '';
+      startAnimationIfNeeded();
+    } else {
+      bettingTimer.textContent = `Приём ставок: ${(remaining / 1000).toFixed(1)} сек.`;
     }
-    updateTimer();
-    bettingCountdownInterval = setInterval(updateTimer, 100);
   }
+  
+  updateTimer();
+  bettingCountdownInterval = setInterval(updateTimer, 100);
+}
+
 
   function startAnimationIfNeeded() {
     if (!isPlaying && crashPoint && currentRound && !currentRound.ended_at) {
@@ -144,45 +149,49 @@ const supabaseClient = window.supabaseClient;
 
   async function subscribeToRealtime() {
     const roundsChannel = supabaseClient.channel('public:rounds')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'rounds' }, payload => {
-        if (payload.eventType === 'DELETE') {
-          if (currentRound && payload.old.id === currentRound.id) {
-            currentRound = null;
-            crashPoint = null;
-            endGame();
-          }
-          return;
+  .on('postgres_changes', { event: '*', schema: 'public', table: 'rounds' }, payload => {
+    if (payload.eventType === 'DELETE') {
+      if (currentRound && payload.old.id === currentRound.id) {
+        currentRound = null;
+        crashPoint = null;
+        endGame();
+      }
+      return;
+    }
+    
+    if (payload.new) {
+      currentRound = payload.new;
+      crashPoint = currentRound.crash_multiplier;
+      resetGameStateForNewRound();
+      
+      if (currentRound.betting_started_at) {
+        const startedAt = new Date(currentRound.betting_started_at).getTime();
+        const now = Date.now();
+        const elapsedMs = now - startedAt;
+        const remainingMs = BETTING_PERIOD_MS - elapsedMs;
+        
+        if (remainingMs > 0) {
+          startBettingCountdown(startedAt, BETTING_PERIOD_MS);
+          multiplierDisplay.textContent = 'Ожидание ставок...';
+          drawGraph(1, crashPoint);
+          cashOutBtn.disabled = true;
+          startBetBtn.disabled = false;
+          betAmount.disabled = false;
+        } else {
+          bettingTimer.textContent = '';
+          startTime = performance.now() - elapsedMs;
+          startAnimationIfNeeded();
         }
-        if (payload.new) {
-          currentRound = payload.new;
-          crashPoint = currentRound.crash_multiplier;
-          resetGameStateForNewRound();
-          if (currentRound.betting_started_at) {
-            const startedAt = new Date(currentRound.betting_started_at).getTime();
-            const now = Date.now();
-            const elapsedMs = now - startedAt;
-            if (elapsedMs < BETTING_PERIOD_MS) {
-              startBettingCountdown(startedAt);
-              multiplierDisplay.textContent = 'Ожидание ставок...';
-              drawGraph(1, crashPoint);
-              cashOutBtn.disabled = true;
-              startBetBtn.disabled = false;
-              betAmount.disabled = false;
-            } else {
-              bettingTimer.textContent = '';
-              startTime = performance.now() - elapsedMs;
-              startAnimationIfNeeded();
-            }
-          } else {
-            bettingTimer.textContent = 'Ожидание первой ставки...';
-            multiplierDisplay.textContent = '1.00x';
-            drawGraph(1, crashPoint);
-            cashOutBtn.disabled = true;
-            startBetBtn.disabled = false;
-            betAmount.disabled = false;
-          }
-        }
-      });
+      } else {
+        bettingTimer.textContent = 'Ожидание первой ставки...';
+        multiplierDisplay.textContent = '1.00x';
+        drawGraph(1, crashPoint);
+        cashOutBtn.disabled = true;
+        startBetBtn.disabled = false;
+        betAmount.disabled = false;
+      }
+    }
+  });
     await roundsChannel.subscribe();
 
     const betsChannel = supabaseClient.channel('public:bets')
@@ -426,4 +435,5 @@ const supabaseClient = window.supabaseClient;
 }
 
 window.initCrashGame = initCrashGame;
+
 
