@@ -205,8 +205,12 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    // Вызов place_bet_dice без параметров (функция без аргументов)
-    const { error: betError } = await supabaseClient.rpc('place_bet_dice');
+    // Передаём ставку при размещении ставки
+    const { error: betError } = await supabaseClient.rpc('place_bet_dice', {
+      p_round_id: newRound.id,
+      p_player_id: currentUser.id,
+      p_bet_amount: betAmount
+    });
     if (betError) {
       alert('Ошибка размещения ставки: ' + betError.message);
       return;
@@ -263,6 +267,11 @@ document.addEventListener('DOMContentLoaded', () => {
     createLobbyForm.style.display = 'none';
     lobbyWaitingDiv.style.display = 'block';
     updateLobbyPlayersUI();
+
+    // Если игра уже стартовала (возможно, сразу после создания), обновляем UI создателя
+    if (lobby.gameStarted) {
+      handleStartGame({ payload: { lobby } });
+    }
   });
 
   async function connectToLobbyChannel(lobbyId) {
@@ -294,8 +303,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (lobby.players.find(p => p.id === player.id)) return;
 
     if (player.id === currentUser.id) {
-      // Вызов place_bet_dice без параметров
-      const { error: betError } = await supabaseClient.rpc('place_bet_dice');
+      // Передаём ставку при размещении ставки
+      const { error: betError } = await supabaseClient.rpc('place_bet_dice', {
+        p_round_id: lobby.id,
+        p_player_id: player.id,
+        p_bet_amount: lobby.betAmount
+      });
       if (betError) {
         console.error('Ошибка размещения ставки для игрока', player.username, betError.message);
         return;
@@ -368,53 +381,52 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   rollDiceBtn.addEventListener('click', async () => {
-  if (hasRolled || !lobby) return;
+    if (hasRolled || !lobby) return;
 
-  const roll = Math.floor(Math.random() * 6) + 1;
-  hasRolled = true;
+    const roll = Math.floor(Math.random() * 6) + 1;
+    hasRolled = true;
 
-  const { data, error } = await supabaseClient.rpc('player_roll_dice', {
-    p_round_id: lobby.id,
-    p_player_id: currentUser.id,
-    p_roll_value: roll
+    const { data, error } = await supabaseClient.rpc('player_roll_dice', {
+      p_round_id: lobby.id,
+      p_player_id: currentUser.id,
+      p_roll_value: roll
+    });
+
+    if (error) {
+      alert('Ошибка при броске кости: ' + error.message);
+      hasRolled = false;
+      return;
+    }
+
+    const player = lobby.players.find(p => p.id === currentUser.id);
+    if (player) {
+      player.roll = roll;
+    }
+    updateDiceResultsUI();
+
+    gameMessageDiv.textContent = `Вы бросили: ${roll}. Ждите остальных игроков...`;
+    rollDiceBtn.disabled = true;
   });
 
-  if (error) {
-    alert('Ошибка при броске кости: ' + error.message);
-    hasRolled = false;
-    return;
+  function handlePlayerRolled({ payload }) {
+    console.log('player_rolled event received:', payload);
+
+    const playerId = payload.playerId ?? payload.player_id;
+    const roll = payload.roll ?? payload.roll_value;
+
+    const player = lobby.players.find(p => p.id === playerId);
+    if (player) {
+      player.roll = roll;
+    }
+
+    updateDiceResultsUI();
+
+    lobby.rollsDoneCount = lobby.players.filter(p => p.roll !== null).length;
+
+    if (lobby.rollsDoneCount === lobby.players.length) {
+      gameMessageDiv.textContent = 'Все бросили. Ожидаем результат...';
+    }
   }
-
-  const player = lobby.players.find(p => p.id === currentUser.id);
-  if (player) {
-    player.roll = roll;
-  }
-  updateDiceResultsUI();
-
-  gameMessageDiv.textContent = `Вы бросили: ${roll}. Ждите остальных игроков...`;
-  rollDiceBtn.disabled = true;
-});
-
-function handlePlayerRolled({ payload }) {
-  console.log('player_rolled event received:', payload);
-
-  const playerId = payload.playerId ?? payload.player_id;
-  const roll = payload.roll ?? payload.roll_value;
-
-  const player = lobby.players.find(p => p.id === playerId);
-  if (player) {
-    player.roll = roll;
-  }
-
-  updateDiceResultsUI();
-
-  lobby.rollsDoneCount = lobby.players.filter(p => p.roll !== null).length;
-
-  if (lobby.rollsDoneCount === lobby.players.length) {
-    gameMessageDiv.textContent = 'Все бросили. Ожидаем результат...';
-  }
-}
-
 
   function handleGameEnded({ payload }) {
     const { winner, rolls } = payload;
@@ -552,5 +564,3 @@ function handlePlayerRolled({ payload }) {
     updateLobbyPlayersUI();
   }
 });
-
-
