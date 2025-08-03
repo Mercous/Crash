@@ -327,7 +327,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       lobby.gameStarted = true;
 
-      channel.broadcast({
+      channel.send({
   type: 'broadcast',
   event: 'start_game',
   payload: { lobby }
