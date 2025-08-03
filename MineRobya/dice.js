@@ -287,32 +287,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Подписка на кастомные broadcast-события
   channel.on('broadcast', { event: 'lobby_created' }, handleLobbyCreated);
-
-  // Обновлённая обработка player_joined для гарантии обновления списка игроков у всех
-  channel.on('broadcast', { event: 'player_joined' }, async ({ payload }) => {
-    const player = payload.player;
-    console.log('player_joined broadcast received:', player);
-
-    if (!lobby) {
-      console.warn('Lobby не инициализирован при player_joined');
-      return;
-    }
-
-    // Проверяем, есть ли игрок уже в списке
-    const existingPlayer = lobby.players.find(p => p.id === player.id);
-    if (existingPlayer) {
-      console.log('Игрок уже в списке:', player.username);
-      return;
-    }
-
-    // Добавляем нового игрока с roll=null
-    lobby.players.push({ ...player, roll: null });
-
-    // Обновляем UI игроков и результаты бросков
-    updateLobbyPlayersUI();
-    updateDiceResultsUI();
-  });
-
+  channel.on('broadcast', { event: 'player_joined' }, handlePlayerJoined);
   channel.on('broadcast', { event: 'player_left' }, handlePlayerLeft);
   channel.on('broadcast', { event: 'start_game' }, handleStartGame);
   // channel.on('broadcast', { event: 'player_rolled' }, handlePlayerRolled); // по желанию
@@ -703,4 +678,8 @@ async function refreshLobbyState(lobbyId) {
     updateLobbyPlayersUI();
   }
 });
+
+
+
+
 
