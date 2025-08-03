@@ -318,31 +318,36 @@ document.addEventListener('DOMContentLoaded', () => {
     lobby.players.push({ ...player, roll: null });
     updateLobbyPlayersUI();
 
-    if (lobby.players.length === lobby.maxPlayers && !lobby.gameStarted) {
-      const { error: startError } = await supabaseClient.rpc('start_dice_round', { p_round_id: lobby.id });
-      if (startError) {
-        console.error('Ошибка запуска игры:', startError.message);
-        return;
-      }
+   if (lobby.players.length === lobby.maxPlayers && !lobby.gameStarted) {
+  const { error: startError } = await supabaseClient.rpc('start_dice_round', { p_round_id: lobby.id });
+  if (startError) {
+    console.error('Ошибка запуска игры:', startError.message);
+    return;
+  }
 
-      lobby.gameStarted = true;
+  lobby.gameStarted = true;
 
-      channel.send({
-  type: 'broadcast',
-  event: 'start_game',
-  payload: { lobby }
-});
+  channel.send({
+    type: 'broadcast',
+    event: 'start_game',
+    payload: { lobby }
+  });
 
+  // Обновляем UI создателя вручную
+  if (currentUser.id === lobby.players[0].id) { // если текущий — создатель
+    handleStartGame({ payload: { lobby } });
+  }
 
-      if (lobbyListChannel) {
-        lobbyListChannel.send({
-          type: 'broadcast',
-          event: 'lobby_closed',
-          payload: { lobbyId: lobby.id }
-        });
-      }
-      removeLobbyFromList(lobby.id);
-    }
+  if (lobbyListChannel) {
+    lobbyListChannel.send({
+      type: 'broadcast',
+      event: 'lobby_closed',
+      payload: { lobbyId: lobby.id }
+    });
+  }
+  removeLobbyFromList(lobby.id);
+}
+
   }
 
   async function handlePlayerLeft({ payload }) {
@@ -565,4 +570,5 @@ document.addEventListener('DOMContentLoaded', () => {
     updateLobbyPlayersUI();
   }
 });
+
 
