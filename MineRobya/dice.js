@@ -327,11 +327,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
       lobby.gameStarted = true;
 
-      channel.send({
-        type: 'broadcast',
-        event: 'start_game',
-        payload: { lobby }
-      });
+      channel.broadcast({
+  type: 'broadcast',
+  event: 'start_game',
+  payload: { lobby }
+});
+
 
       if (lobbyListChannel) {
         lobbyListChannel.send({
@@ -564,3 +565,4 @@ document.addEventListener('DOMContentLoaded', () => {
     updateLobbyPlayersUI();
   }
 });
+
