@@ -25,28 +25,27 @@ function initCrashGame(getCurrentUser) {
   let startTime = null;
   let cashedOut = false;
   let currentRound = null;
-  let serverTimeOffset = 0; // Разница между серверным и локальным временем
+  let serverTimeOffset = 0;
 
   // Константы
-  const BETTING_DURATION_MS = 30 * 1000; // 30 секунд для ставок
+  const BETTING_DURATION_MS = 30 * 1000;
   let bettingCountdownInterval = null;
   let currentX = 0;
   const speed = 100;
 
-  // Инициализация - получение серверного времени
+  // Инициализация серверного времени
   async function initServerTime() {
     try {
       const { data: serverTime, error } = await supabaseClient.rpc('get_server_time');
       if (!error && serverTime) {
-        const serverTimeMs = new Date(serverTime).getTime();
-        serverTimeOffset = serverTimeMs - Date.now();
+        serverTimeOffset = new Date(serverTime).getTime() - Date.now();
       }
     } catch (e) {
       console.error('Ошибка получения серверного времени:', e);
     }
   }
 
-  // Получение текущего времени с учетом серверного смещения
+  // Получение текущего серверного времени
   function getCurrentServerTime() {
     return Date.now() + serverTimeOffset;
   }
@@ -115,7 +114,7 @@ function initCrashGame(getCurrentUser) {
     gameAnimationFrame = requestAnimationFrame(animateGame);
   }
 
-  // Сброс состояния игры для нового раунда
+  // Сброс состояния игры
   function resetGameStateForNewRound() {
     isPlaying = false;
     cashOutBtn.disabled = true;
@@ -169,7 +168,7 @@ function initCrashGame(getCurrentUser) {
 
   // Подписка на изменения в реальном времени
   async function subscribeToRealtime() {
-    await initServerTime(); // Инициализация серверного времени
+    await initServerTime();
     
     const roundsChannel = supabaseClient.channel('public:rounds')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'rounds' }, payload => {
@@ -193,7 +192,6 @@ function initCrashGame(getCurrentUser) {
             const remaining = endsAt - now;
             
             if (remaining > 0) {
-              // Период ставок еще активен
               startBettingCountdown(endsAt);
               multiplierDisplay.textContent = 'Ожидание ставок...';
               drawGraph(1, crashPoint);
@@ -201,7 +199,6 @@ function initCrashGame(getCurrentUser) {
               startBetBtn.disabled = false;
               betAmount.disabled = false;
             } else {
-              // Период ставок завершен
               bettingTimer.textContent = '';
               const startedAt = new Date(currentRound.betting_started_at).getTime();
               startTime = performance.now() - (now - startedAt);
