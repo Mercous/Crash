@@ -321,9 +321,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
   async function handleLobbyCreated({ payload }) {
+  if (!lobby) {
     lobby = payload.lobby;
-    updateLobbyPlayersUI();
+  } else {
+    Object.assign(lobby, payload.lobby);
+
+    // Обновляем игроков по id, сохраняя ссылки
+    payload.lobby.players.forEach(newPlayer => {
+      const existingPlayer = lobby.players.find(p => p.id === newPlayer.id);
+      if (existingPlayer) {
+        Object.assign(existingPlayer, newPlayer);
+      } else {
+        lobby.players.push(newPlayer);
+      }
+    });
   }
+  updateLobbyPlayersUI();
+  updateDiceResultsUI();
+}
+
 
   async function handlePlayerJoined({ payload }) {
     const player = payload.player;
@@ -598,6 +614,7 @@ document.addEventListener('DOMContentLoaded', () => {
     updateLobbyPlayersUI();
   }
 });
+
 
 
 
