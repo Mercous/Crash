@@ -287,24 +287,28 @@ document.addEventListener('DOMContentLoaded', () => {
   channel.on('broadcast', { event: 'player_joined' }, handlePlayerJoined);
   channel.on('broadcast', { event: 'player_left' }, handlePlayerLeft);
   channel.on('broadcast', { event: 'start_game' }, handleStartGame);
-  channel.on('broadcast', { event: 'player_rolled' }, handlePlayerRolled);
+  // Можно временно отключить, чтобы не было рассинхронизации:
+  // channel.on('broadcast', { event: 'player_rolled' }, handlePlayerRolled);
   channel.on('broadcast', { event: 'game_ended' }, handleGameEnded);
 
-  // Новая подписка на обновления таблицы bets для текущего раунда
+  // Подписка на обновления таблицы bets для текущего раунда
   channel.on('postgres_changes', {
     event: 'update',
     schema: 'public',
     table: 'bets',
     filter: `round_id=eq.${lobbyId}`
   }, ({ new: updatedBet }) => {
+    if (!lobby) return; // защита от отсутствия lobby
     if (updatedBet.roll_value === null) return;
 
     const player = lobby.players.find(p => p.id === updatedBet.user_id);
     if (player) {
       player.roll = updatedBet.roll_value;
-      updateDiceResultsUI();
 
+      // Обновляем счётчик бросков
       lobby.rollsDoneCount = lobby.players.filter(p => p.roll !== null).length;
+
+      updateDiceResultsUI();
 
       if (lobby.rollsDoneCount === lobby.players.length) {
         gameMessageDiv.textContent = 'Все бросили. Ожидаем результат...';
@@ -594,6 +598,7 @@ document.addEventListener('DOMContentLoaded', () => {
     updateLobbyPlayersUI();
   }
 });
+
 
 
 
