@@ -1,10 +1,7 @@
-// crash.js
 
-// Используем глобальный supabaseClient, объявленный в script.js (или импортируй, если модуль)
-// Функция инициализации краша, чтобы можно было вызвать после логина
 function initCrashGame(getCurrentUser) {
 const supabaseClient = window.supabaseClient;
-  // DOM элементы
+ 
   const betAmount = document.getElementById('bet-amount');
   const startBetBtn = document.getElementById('start-bet');
   const cashOutBtn = document.getElementById('cash-out');
@@ -19,7 +16,7 @@ const supabaseClient = window.supabaseClient;
   const ctx = graphCanvas.getContext('2d');
   const bettingTimer = document.getElementById('betting-timer');
 
-  // Переменные
+
   let currentMultiplier = 1.0;
   let gameAnimationFrame;
   let isPlaying = false;
@@ -34,7 +31,7 @@ const supabaseClient = window.supabaseClient;
   let currentX = 0;
   const speed = 100;
 
-  // Функции (как в твоём коде, с заменой window.currentUser на getCurrentUser())
+  
 
   function drawGraph(multiplier, crash) {
     ctx.clearRect(0, 0, graphCanvas.width, graphCanvas.height);
@@ -226,7 +223,7 @@ const supabaseClient = window.supabaseClient;
     });
   }
 
-  // Обработка ставок
+
   startBetBtn.addEventListener('click', async () => {
     if (isPlaying) return;
     const val = betAmount.value.trim();
@@ -250,7 +247,7 @@ const supabaseClient = window.supabaseClient;
     }
     getCurrentUser().balance = data[0].new_balance;
     balanceDisplay.textContent = getCurrentUser().balance;
-    // Обновляем раунд
+  
     const { data: activeRound, error: roundError } = await supabaseClient
       .from('rounds')
       .select('*')
@@ -351,7 +348,7 @@ const supabaseClient = window.supabaseClient;
     const betElement = document.createElement('div');
     betElement.className = 'recent-bet';
 
-    // Безопасное получение multiplier
+ 
     const multiplierValue = (bet.multiplier != null) ? bet.multiplier : 0;
     const multiplier = document.createElement('span');
     multiplier.textContent = multiplierValue.toFixed(2) + 'x';
@@ -375,7 +372,7 @@ const supabaseClient = window.supabaseClient;
   balanceDisplay.textContent = user.balance;
 
   if (bets.length > 0) {
-    // Фильтруем ставки с валидным multiplier
+   
     const validMultipliers = bets
       .map(bet => bet.multiplier)
       .filter(m => m != null);
@@ -421,11 +418,12 @@ const supabaseClient = window.supabaseClient;
     updateProfileStats(finishedBets);
   }
 
-  // Запускаем подписку realtime
+
   subscribeToRealtime();
 
-  // Изначальная отрисовка графика
+
   drawGraph(1, 10);
 }
 
 window.initCrashGame = initCrashGame;
+
