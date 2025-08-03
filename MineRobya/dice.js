@@ -27,7 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Состояния
   let currentUser = null;
-  let lobby = null; // { id, betAmount, maxPlayers, players: [{id, username, roll}], rollsDoneCount, gameStarted }
+  let lobby = null;
   let channel = null;
   let lobbyListChannel = null;
   let hasRolled = false;
@@ -56,7 +56,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     await lobbyListChannel.subscribe();
-
     await loadOpenLobbies();
   })();
 
@@ -92,9 +91,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     rollDiceBtn.disabled = true;
     exitGameBtn.style.display = 'none';
-
     hasRolled = false;
-    
+
     if (refreshInterval) {
       clearInterval(refreshInterval);
       refreshInterval = null;
@@ -211,7 +209,6 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    // Передаём ставку при размещении ставки
     const { error: betError } = await supabaseClient.rpc('place_bet_dice', {
       p_round_id: newRound.id,
       p_player_id: currentUser.id,
@@ -255,7 +252,8 @@ document.addEventListener('DOMContentLoaded', () => {
       maxPlayers: roundData.max_players,
       players,
       rollsDoneCount: players.filter(p => p.roll !== null).length,
-      gameStarted: roundData.game_started
+      gameStarted: roundData.game_started,
+      ended: false
     };
 
     await connectToLobbyChannel(lobby.id);
@@ -274,7 +272,6 @@ document.addEventListener('DOMContentLoaded', () => {
     lobbyWaitingDiv.style.display = 'block';
     updateLobbyPlayersUI();
 
-    // Если игра уже стартовала (возможно, сразу после создания), обновляем UI создателя
     if (lobby.gameStarted) {
       handleStartGame({ payload: { lobby } });
     }
@@ -288,10 +285,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     channel = supabaseClient.channel('public:dice_lobby_' + lobbyId);
 
-    // Загрузка актуального состояния лобби из базы
     await refreshLobbyState(lobbyId);
 
-    // Подписка на кастомные broadcast-события
     channel.on('broadcast', { event: 'lobby_created' }, handleLobbyCreated);
     channel.on('broadcast', { event: 'player_joined' }, handlePlayerJoined);
     channel.on('broadcast', { event: 'player_left' }, handlePlayerLeft);
@@ -299,13 +294,12 @@ document.addEventListener('DOMContentLoaded', () => {
     channel.on('broadcast', { event: 'player_rolled' }, handlePlayerRolled);
     channel.on('broadcast', { event: 'game_ended' }, handleGameEnded);
 
-    // Подписка на обновления таблицы bets для текущего раунда
     channel.on('postgres_changes', {
       event: 'update',
       schema: 'public',
       table: 'bets',
       filter: `round_id=eq.${lobbyId}`
-    }, ({ new: updatedBet }) => {
+    }, async ({ new: updatedBet }) => {
       if (!lobby) return;
       if (updatedBet.roll_value === null) return;
 
@@ -315,18 +309,27 @@ document.addEventListener('DOMContentLoaded', () => {
         lobby.rollsDoneCount = lobby.players.filter(p => p.roll !== null).length;
         updateDiceResultsUI();
 
-        if (lobby.rollsDoneCount === lobby.players.length) {
-          gameMessageDiv.textContent = 'Все бросили. Ожидаем результат...';
+        if (lobby.rollsDoneCount === lobby.players.length && !lobby.ended) {
+          gameMessageDiv.textContent = 'Все бросили. Определяем победителя...';
+          
+          setTimeout(async () => {
+            const { error } = await supabaseClient.rpc('finish_dice_round', {
+              p_round_id: lobby.id
+            });
+            
+            if (error) {
+              console.error('Ошибка завершения раунда:', error.message);
+              return;
+            }
+            
+            await refreshLobbyState(lobby.id);
+          }, 2000);
         }
       }
     });
 
     await channel.subscribe();
 
-    // Добавляем периодическое обновление состояния лобби
-    if (refreshInterval) {
-      clearInterval(refreshInterval);
-    }
     refreshInterval = setInterval(async () => {
       if (lobby && !lobby.gameStarted) {
         await refreshLobbyState(lobby.id);
@@ -337,7 +340,7 @@ document.addEventListener('DOMContentLoaded', () => {
   async function refreshLobbyState(lobbyId) {
     const { data: roundData, error: roundError } = await supabaseClient
       .from('rounds')
-      .select('id, bet_amount, max_players, game_started')
+      .select('id, bet_amount, max_players, game_started, ended_at')
       .eq('id', lobbyId)
       .single();
 
@@ -348,7 +351,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const { data: bets, error: betsError } = await supabaseClient
       .from('bets')
-      .select('user_id, roll_value, users(username)')
+      .select('user_id, roll_value, users(username), profit, crashed')
       .eq('round_id', lobbyId);
 
     if (betsError) {
@@ -359,7 +362,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const players = bets.map(b => ({
       id: b.user_id,
       username: b.users.username,
-      roll: b.roll_value ?? null
+      roll: b.roll_value ?? null,
+      profit: b.profit,
+      crashed: b.crashed
     }));
 
     if (!lobby) {
@@ -369,14 +374,16 @@ document.addEventListener('DOMContentLoaded', () => {
         maxPlayers: roundData.max_players,
         players,
         rollsDoneCount: players.filter(p => p.roll !== null).length,
-        gameStarted: roundData.game_started
+        gameStarted: roundData.game_started,
+        ended: !!roundData.ended_at
       };
     } else {
       Object.assign(lobby, {
         id: roundData.id,
         betAmount: roundData.bet_amount,
         maxPlayers: roundData.max_players,
-        gameStarted: roundData.game_started
+        gameStarted: roundData.game_started,
+        ended: !!roundData.ended_at
       });
 
       players.forEach(newPlayer => {
@@ -389,21 +396,51 @@ document.addEventListener('DOMContentLoaded', () => {
       });
 
       lobby.players = lobby.players.filter(p => players.find(np => np.id === p.id));
-
       lobby.rollsDoneCount = players.filter(p => p.roll !== null).length;
     }
 
     updateLobbyPlayersUI();
     updateDiceResultsUI();
+
+    if (lobby.ended && gameDiv.style.display !== 'none') {
+      showGameResults();
+    }
   }
 
-  async function handleLobbyCreated({ payload }) {
+  function showGameResults() {
+    if (!lobby) return;
+
+    const winner = lobby.players.find(p => !p.crashed);
+    if (winner) {
+      gameMessageDiv.textContent = `Победитель: ${winner.username}! Выигрыш: ${winner.profit}`;
+    } else {
+      gameMessageDiv.textContent = 'Игра завершилась ничьей.';
+    }
+
+    rollDiceBtn.disabled = true;
+    exitGameBtn.style.display = 'inline-block';
+  }
+
+  function handleGameEnded({ payload }) {
+    if (!lobby) return;
+    
+    lobby.ended = true;
+    showGameResults();
+    
+    const winner = lobby.players.find(p => !p.crashed);
+    if (winner && winner.id === currentUser.id) {
+      loadUserProfile(currentUser.id).then(user => {
+        currentUser = user;
+      });
+    }
+  }
+
+  function handleLobbyCreated({ payload }) {
     if (!lobby) {
       lobby = payload.lobby;
     } else {
       Object.assign(lobby, payload.lobby);
 
-      // Обновляем игроков по id, сохраняя ссылки
       payload.lobby.players.forEach(newPlayer => {
         const existingPlayer = lobby.players.find(p => p.id === newPlayer.id);
         if (existingPlayer) {
@@ -423,7 +460,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (lobby.players.find(p => p.id === player.id)) return;
 
     if (player.id === currentUser.id) {
-      // Передаём ставку при размещении ставки
       const { error: betError } = await supabaseClient.rpc('place_bet_dice', {
         p_round_id: lobby.id,
         p_player_id: player.id,
@@ -453,8 +489,7 @@ document.addEventListener('DOMContentLoaded', () => {
         payload: { lobby }
       });
 
-      // Обновляем UI создателя вручную
-      if (currentUser.id === lobby.players[0].id) { // если текущий — создатель
+      if (currentUser.id === lobby.players[0].id) {
         handleStartGame({ payload: { lobby } });
       }
 
@@ -505,8 +540,42 @@ document.addEventListener('DOMContentLoaded', () => {
     hasRolled = false;
   }
 
+  function handlePlayerRolled({ payload }) {
+    const playerId = payload.playerId ?? payload.player_id;
+    const roll = payload.roll ?? payload.roll_value;
+
+    const player = lobby.players.find(p => p.id === playerId);
+    if (player) {
+      player.roll = roll;
+      lobby.rollsDoneCount = lobby.players.filter(p => p.roll !== null).length;
+      updateDiceResultsUI();
+
+      if (lobby.rollsDoneCount === lobby.players.length && !lobby.ended) {
+        gameMessageDiv.textContent = 'Все бросили. Ожидаем результат...';
+      }
+    }
+  }
+
+  function updateLobbyPlayersUI() {
+    lobbyPlayersList.innerHTML = '';
+    lobby.players.forEach(p => {
+      const li = document.createElement('li');
+      li.textContent = p.username + (p.id === currentUser.id ? ' (Вы)' : '');
+      lobbyPlayersList.appendChild(li);
+    });
+  }
+
+  function updateDiceResultsUI() {
+    diceResultsDiv.innerHTML = '';
+    lobby.players.forEach(p => {
+      const div = document.createElement('div');
+      div.textContent = `${p.username}: ${p.roll === null ? 'не бросал' : p.roll}`;
+      diceResultsDiv.appendChild(div);
+    });
+  }
+
   rollDiceBtn.addEventListener('click', async () => {
-    if (hasRolled || !lobby) return;
+    if (hasRolled || !lobby || lobby.ended) return;
 
     const roll = Math.floor(Math.random() * 6) + 1;
     hasRolled = true;
@@ -529,7 +598,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     updateDiceResultsUI();
 
-    // Отправляем событие о броске
     channel.send({
       type: 'broadcast',
       event: 'player_rolled',
@@ -542,61 +610,6 @@ document.addEventListener('DOMContentLoaded', () => {
     gameMessageDiv.textContent = `Вы бросили: ${roll}. Ждите остальных игроков...`;
     rollDiceBtn.disabled = true;
   });
-
-  function handlePlayerRolled({ payload }) {
-    console.log('player_rolled event received:', payload);
-
-    const playerId = payload.playerId ?? payload.player_id;
-    const roll = payload.roll ?? payload.roll_value;
-
-    const player = lobby.players.find(p => p.id === playerId);
-    if (player) {
-      player.roll = roll;
-      lobby.rollsDoneCount = lobby.players.filter(p => p.roll !== null).length;
-      updateDiceResultsUI();
-
-      if (lobby.rollsDoneCount === lobby.players.length) {
-        gameMessageDiv.textContent = 'Все бросили. Ожидаем результат...';
-      }
-    }
-  }
-
-  function handleGameEnded({ payload }) {
-    const { winner, rolls } = payload;
-
-    lobby.players.forEach(p => {
-      const playerRoll = rolls.find(r => r.player_id === p.id);
-      p.roll = playerRoll ? playerRoll.roll : null;
-    });
-    updateDiceResultsUI();
-
-    if (winner) {
-      gameMessageDiv.textContent = `Победитель: ${winner.username}! Выигрыш зачислен на счёт.`;
-    } else {
-      gameMessageDiv.textContent = 'Игра завершилась ничьей.';
-    }
-
-    rollDiceBtn.disabled = true;
-    exitGameBtn.style.display = 'inline-block';
-  }
-
-  function updateLobbyPlayersUI() {
-    lobbyPlayersList.innerHTML = '';
-    lobby.players.forEach(p => {
-      const li = document.createElement('li');
-      li.textContent = p.username + (p.id === currentUser.id ? ' (Вы)' : '');
-      lobbyPlayersList.appendChild(li);
-    });
-  }
-
-  function updateDiceResultsUI() {
-    diceResultsDiv.innerHTML = '';
-    lobby.players.forEach(p => {
-      const div = document.createElement('div');
-      div.textContent = `${p.username}: ${p.roll === null ? 'не бросал' : p.roll}`;
-      diceResultsDiv.appendChild(div);
-    });
-  }
 
   leaveLobbyBtn.addEventListener('click', async () => {
     if (!lobby) return;
@@ -675,7 +688,8 @@ document.addEventListener('DOMContentLoaded', () => {
       maxPlayers: roundData.max_players,
       players,
       rollsDoneCount: players.filter(p => p.roll !== null).length,
-      gameStarted: roundData.game_started
+      gameStarted: roundData.game_started,
+      ended: false
     };
 
     channel.send({
