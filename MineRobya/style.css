@@ -1,0 +1,869 @@
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+body {
+  margin: 0;
+  background-color: #0d1229;
+  color: #a0c8ff;
+  font-family: 'Press Start 2P', cursive, monospace;
+  user-select: none;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden; /* запрет горизонтальной прокрутки */
+}
+
+/* Хедер */
+header {
+  background-color: #121a44;
+  padding: 14px 28px;
+  border-bottom: 3px solid #3e6fb1;
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  box-shadow: 0 0 12px #2a4a8d88;
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+/* Кнопки и ссылки в хедере */
+header button,
+header a {
+  font-family: 'Press Start 2P', cursive;
+  background-color: transparent;
+  border: 2px solid #4a90e2;
+  color: #a0c8ff;
+  padding: 12px 22px;
+  font-size: 12px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.25s ease;
+  border-radius: 6px;
+  user-select: none;
+  box-shadow: 0 0 6px #4a90e2aa;
+}
+
+header button:hover,
+header a:hover {
+  background-color: #4a90e2;
+  color: #0d1229;
+  border-color: #4a90e2;
+  box-shadow: 0 0 15px #4a90e2ee;
+}
+
+header button.active {
+  background-color: #4a90e2;
+  color: #0d1229;
+  border-color: #2f5dbb;
+  font-weight: 700;
+  box-shadow: 0 0 18px #2f5dbb;
+}
+
+header a.crash-button {
+  font-weight: 700;
+  border-color: #ff5f61;
+  color: #ff5f61;
+  padding: 12px 26px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  box-shadow: 0 0 8px #ff5f61aa;
+  transition: all 0.3s ease;
+  border-radius: 8px;
+}
+
+header a.crash-button:hover {
+  background-color: #ff5f61;
+  color: #0d1229;
+  border-color: #ff3a3d;
+  box-shadow: 0 0 20px #ff5f61ee;
+}
+
+/* Основной контейнер */
+main {
+  flex-grow: 1;
+  margin: 28px;
+  padding: 26px;
+  background-color: #121a44;
+  border-radius: 12px;
+  border: 2px solid #3e6fb1;
+  box-shadow: 0 0 20px rgba(58, 105, 190, 0.6);
+  color: #a0c8ff;
+  font-size: 11px;
+  line-height: 1.5;
+  user-select: text;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Все экраны (вкладки) по умолчанию скрыты */
+.screen {
+  display: none;
+}
+
+/* Активный экран показываем как flex-контейнер */
+.screen.active {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Заголовок */
+.screen h1 {
+  font-size: 14px;
+  font-weight: 700;
+  color: #74a9ff;
+  margin-bottom: 16px;
+}
+
+/* Текст */
+.screen p {
+  white-space: pre-line;
+  color: #b0caff;
+}
+
+/* Ссылки внутри main */
+.screen a {
+  color: #4a90e2;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.screen a:hover {
+  color: #74a9ff;
+}
+
+/* Бегущая строка */
+.marquee-container {
+  flex: 1;
+  overflow: hidden;
+  white-space: nowrap;
+  border: 2px solid #2555cc;
+  padding: 10px;
+  box-sizing: border-box;
+  background: #0a1a3a;
+  color: #a0c8ff;
+  font-family: 'Press Start 2P', cursive;
+  font-size: 12px;
+  height: 150px;
+  display: flex;
+  align-items: center;
+}
+
+.marquee-text {
+  display: inline-block;
+  padding-left: 100%;
+  animation: marquee 15s linear infinite;
+}
+
+@keyframes marquee {
+  0% { transform: translateX(100%); }
+  100% { transform: translateX(-100%); }
+}
+
+/* Контейнер бегущей строки */
+.header-marquee {
+  width: 100%;
+  height: 20px;
+  overflow: hidden;
+  white-space: nowrap;
+  border-top: 1px solid #2555cc;
+  border-bottom: 1px solid #2555cc;
+  background: #122a5a;
+  display: flex;
+  align-items: center;
+  font-size: 12px;
+  padding-left: 10px;
+  margin-top: 5px;
+}
+
+/* Текст бегущей строки */
+.header-marquee-text {
+  display: inline-block;
+  animation: marquee 15s linear infinite;
+  white-space: nowrap;
+}
+
+/* Верхний ряд меню: слева и справа */
+.menu-left,
+.menu-right {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+/* Контейнер для меню кнопок и кнопок входа/регистрации */
+header > nav {
+  justify-content: flex-start;
+}
+
+/* Сам верхний ряд: меню слева и кнопки справа */
+header {
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Стили для кнопок Вход и Регистрация */
+.menu-right button {
+  background-color: #2555cc;
+  border: 1px solid #a0c8ff;
+  border-radius: 4px;
+  color: #a0c8ff;
+  font-family: 'Press Start 2P', cursive;
+  font-size: 10px;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.menu-right button:hover {
+  background-color: #3a6ee8;
+}
+
+/* Стили для кнопок меню слева */
+.menu-left button,
+.menu-left a {
+  background-color: transparent;
+  border: 1px solid #a0c8ff;
+  border-radius: 4px;
+  color: #a0c8ff;
+  font-family: 'Press Start 2P', cursive;
+  font-size: 12px;
+  padding: 6px 12px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background-color 0.3s ease;
+}
+
+.menu-left button:hover,
+.menu-left a:hover {
+  background-color: #2555cc;
+}
+
+/* Кнопка Discord */
+.btn-discord {
+  background-color: #7289da;
+  border: 1px solid #a0c8ff;
+  border-radius: 4px;
+  color: white;
+  font-family: 'Press Start 2P', cursive;
+  font-size: 10px;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  white-space: nowrap;
+}
+
+.btn-discord:hover {
+  background-color: #5b6eae;
+}
+
+/* Модальное окно */
+.modal {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.7);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal.active {
+  display: flex;
+}
+
+.modal-content {
+  background: #111;
+  border: 2px solid #7289da;
+  padding: 20px;
+  width: 320px;
+  font-family: 'Press Start 2P', cursive;
+  color: white;
+  position: relative;
+  border-radius: 8px;
+}
+
+/* Кнопка закрытия */
+.modal-close {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 18px;
+}
+
+/* Вкладки */
+.tabs {
+  display: flex;
+  margin-bottom: 20px;
+}
+
+.tab {
+  flex: 1;
+  padding: 10px;
+  text-align: center;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  user-select: none;
+}
+
+.tab.active {
+  border-bottom: 2px solid #7289da;
+  font-weight: bold;
+}
+
+/* Форма */
+form {
+  display: flex;
+  flex-direction: column;
+}
+
+form input {
+  margin-bottom: 12px;
+  padding: 8px;
+  font-family: 'Press Start 2P', cursive;
+  font-size: 10px;
+  border: 1px solid #7289da;
+  border-radius: 4px;
+  background: #222;
+  color: white;
+}
+
+form button {
+  background-color: #7289da;
+  border: none;
+  color: white;
+  font-family: 'Press Start 2P', cursive;
+  font-size: 10px;
+  padding: 8px;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+form button:hover {
+  background-color: #5b6eae;
+}
+
+/* Контролы гостя и пользователя */
+#guest-controls,
+#user-controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.menu-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+#guest-controls button,
+#user-controls button {
+  background-color: #1f2937;
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  font-family: 'Press Start 2P', cursive;
+  font-size: 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  min-width: 90px;
+}
+
+#guest-controls button:hover,
+#user-controls button:hover {
+  background-color: #374151;
+}
+
+#user-info span {
+  font-size: 14px;
+  color: white;
+}
+
+#user-balance {
+  display: inline-flex;
+  align-items: center;
+  font-size: 14px;
+  font-weight: bold;
+  font-family: 'Press Start 2P', cursive;
+  color: white;
+  gap: 4px;
+  line-height: 1;
+  vertical-align: middle;
+  height: 20px;
+}
+
+.crystal-emoji {
+  font-size: 14px;
+  line-height: 1;
+  vertical-align: middle;
+  display: inline-block;
+  margin-left: 2px;
+}
+
+/* Банк */
+#bank {
+  background-color: #0b1a3d;
+  border: 2px solid #3a5aff;
+  border-radius: 12px;
+  padding: 20px 30px;
+  margin: 20px auto;
+  color: #a0c8ff;
+  font-family: 'Press Start 2P', cursive;
+  font-size: 12px;
+  box-shadow: 0 0 10px #3a5aff88;
+  box-sizing: border-box;
+}
+
+#bank h1 {
+  color: #3a5aff;
+  margin-bottom: 12px;
+  font-size: 16px;
+  text-shadow: 0 0 3px #3a5aff;
+}
+
+#bank h2 {
+  margin-top: 24px;
+  margin-bottom: 10px;
+  color: #5a7aff;
+  font-size: 14px;
+  text-shadow: 0 0 2px #5a7aff;
+}
+
+#transfer-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+#transfer-form input[type="text"],
+#transfer-form input[type="number"] {
+  background-color: #1a2a6d;
+  border: 2px solid #3a5aff;
+  border-radius: 6px;
+  color: #a0c8ff;
+  padding: 8px 12px;
+  font-family: 'Press Start 2P', cursive;
+  font-size: 12px;
+  width: 170px;
+  transition: border-color 0.3s ease;
+}
+
+#transfer-form input[type="text"]:focus,
+#transfer-form input[type="number"]:focus {
+  border-color: #7f9eff;
+  outline: none;
+  background-color: #2a3a9d;
+}
+
+#transfer-form button {
+  background-color: #3a5aff;
+  border: none;
+  border-radius: 6px;
+  color: white;
+  font-family: 'Press Start 2P', cursive;
+  font-size: 12px;
+  padding: 10px 22px;
+  cursor: pointer;
+  box-shadow: 0 0 8px #3a5affaa;
+  transition: background-color 0.3s ease;
+  flex-shrink: 0;
+}
+
+#transfer-form button:hover {
+  background-color: #5a7aff;
+  box-shadow: 0 0 12px #5a7affcc;
+}
+
+#top-list {
+  margin-top: 10px;
+  padding-left: 20px;
+  color: #a0c8ff;
+}
+
+#top-list li {
+  margin-bottom: 6px;
+  text-shadow: 0 0 2px #3a5aff;
+}
+
+#transfer-form input::placeholder {
+  color: #5a7affaa;
+}
+
+/* Адаптивность */
+@media (max-width: 520px) {
+  #bank {
+    max-width: 90vw;
+    padding: 15px 20px;
+  }
+
+  #transfer-form input[type="text"],
+  #transfer-form input[type="number"] {
+    width: 100%;
+  }
+
+  #transfer-form {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  #transfer-form button {
+    width: 100%;
+  }
+}
+
+/* Торговля */
+#trade {
+  background-color: #0b1a3d;
+  border: 2px solid #3a5aff;
+  border-radius: 12px;
+  padding: 20px 30px;
+  margin: 40px auto;
+  color: #a0c8ff;
+  font-family: 'Press Start 2P', cursive;
+  font-size: 12px;
+  box-shadow: 0 0 10px #3a5aff88;
+  box-sizing: border-box;
+  flex-direction: column;
+  gap: 16px;
+}
+
+#trade h1 {
+  color: #3a5aff;
+  margin-bottom: 12px;
+  font-size: 16px;
+  text-shadow: 0 0 3px #3a5aff;
+  align-self: flex-start;
+}
+
+#trade p {
+  align-self: flex-start;
+  margin-bottom: 20px;
+  line-height: 1.3;
+}
+
+#create-listing-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+#create-listing-form h2 {
+  color: #5a7aff;
+  font-size: 14px;
+  text-shadow: 0 0 2px #5a7aff;
+  margin-bottom: 8px;
+  align-self: flex-start;
+}
+
+#create-listing-form input[type="text"],
+#create-listing-form input[type="number"] {
+  background-color: #1a2a6d;
+  border: 2px solid #3a5aff;
+  border-radius: 6px;
+  color: #a0c8ff;
+  padding: 8px 12px;
+  font-family: 'Press Start 2P', cursive;
+  font-size: 12px;
+  width: 100%;
+  box-sizing: border-box;
+  transition: border-color 0.3s ease;
+}
+
+#create-listing-form input[type="text"]:focus,
+#create-listing-form input[type="number"]:focus {
+  border-color: #7f9eff;
+  outline: none;
+  background-color: #2a3a9d;
+}
+
+#create-listing-form button {
+  background: linear-gradient(90deg, #3a5aff, #5a7aff);
+  border: none;
+  border-radius: 6px;
+  color: white;
+  font-family: 'Press Start 2P', cursive;
+  font-size: 12px;
+  padding: 10px 0;
+  cursor: pointer;
+  box-shadow: 0 0 8px #3a5affaa;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  width: 100%;
+}
+
+#create-listing-form button:hover {
+  background: linear-gradient(90deg, #5a7aff, #7a9aff);
+  box-shadow: 0 0 12px #5a7affcc;
+}
+
+#listings-container {
+  width: 100%;
+}
+
+#listings-container h2 {
+  color: #5a7aff;
+  font-size: 14px;
+  text-shadow: 0 0 2px #5a7aff;
+  margin-bottom: 8px;
+  align-self: flex-start;
+}
+
+#listings-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  font-family: 'Press Start 2P', cursive;
+  font-size: 12px;
+  color: #a0c8ff;
+  overflow-y: auto;
+  max-height: 360px;
+}
+
+#listings-list li {
+  background-color: #2a3a7a;
+  margin-bottom: 8px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  word-break: break-word;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+#listings-list li:last-child {
+  margin-bottom: 0;
+}
+
+.buy-button {
+  background-color: #3a5aff;
+  border: none;
+  border-radius: 6px;
+  color: white;
+  font-family: 'Press Start 2P', cursive;
+  font-size: 10px;
+  padding: 6px 10px;
+  cursor: pointer;
+  box-shadow: 0 0 6px #3a5affaa;
+  transition: background-color 0.3s ease;
+}
+
+.buy-button:hover {
+  background-color: #5a7aff;
+  box-shadow: 0 0 10px #5a7affcc;
+}
+
+#trade .trade-container {
+  display: flex;
+  gap: 20px;
+  margin-top: 20px;
+}
+
+/* Форма слева, фиксированной ширины */
+#trade #create-listing-form {
+  flex: 1 1 300px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Список заявок справа */
+#trade #listings-container {
+  flex: 2 1 400px;
+  background-color: #1c2a5a;
+  border-radius: 8px;
+  padding: 10px 15px;
+  overflow-y: auto;
+  max-height: 400px;
+  box-sizing: border-box;
+}
+
+/* Адаптивность для торговли */
+@media (max-width: 520px) {
+  #trade {
+    max-width: 90vw;
+    padding: 15px 20px;
+  }
+
+  #trade .trade-container {
+    flex-direction: column;
+  }
+
+  #trade #create-listing-form,
+  #trade #listings-container {
+    flex: none;
+    width: 100%;
+  }
+
+  #listings-container {
+    max-height: 300px;
+  }
+}
+.screen {
+  display: none;
+}
+
+.screen.active {
+  display: flex;
+}
+
+
+
+
+/* Общие стили для вкладок */
+.screen {
+  display: none;
+  padding: 20px;
+  font-family: 'Press Start 2P', cursive;
+  color: #a0c8ff;
+  background-color: #111;
+  border-radius: 8px;
+  margin: 20px auto;
+  max-width: 700px;
+}
+
+.screen.active {
+  display: block;
+}
+
+/* Краш - контейнер */
+.crash-game-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+}
+
+/* Контролы ставок */
+.controls {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+#bet-amount {
+  width: 120px;
+  padding: 8px;
+  font-size: 16px;
+  border-radius: 4px;
+  border: 2px solid #444;
+  background-color: #222;
+  color: #a0c8ff;
+  font-family: 'Press Start 2P', cursive;
+}
+
+#bet-amount:focus {
+  border-color: #4af;
+  outline: none;
+}
+
+button#start-bet,
+button#cash-out {
+  padding: 8px 16px;
+  font-family: 'Press Start 2P', cursive;
+  font-size: 14px;
+  cursor: pointer;
+  border: none;
+  border-radius: 6px;
+  background-color: #4af;
+  color: #111;
+  transition: background-color 0.3s ease;
+}
+
+button#start-bet:disabled,
+button#cash-out:disabled {
+  background-color: #555;
+  cursor: default;
+}
+
+button#start-bet:hover:not(:disabled),
+button#cash-out:hover:not(:disabled) {
+  background-color: #6cf;
+}
+
+/* Список ставок игроков */
+#players-bets-list, #recent-bets {
+  width: 100%;
+  max-height: 150px;
+  overflow-y: auto;
+  background: #222;
+  padding: 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  color: #ccc;
+  font-family: 'Press Start 2P', cursive;
+}
+
+.player-bet {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.player-bet .name {
+  font-weight: bold;
+  color: #4af;
+}
+
+.player-bet .amount {
+  color: #a0c8ff;
+}
+
+/* История ставок */
+.recent-bet {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.recent-bet span {
+  display: inline-block;
+  min-width: 50px;
+  text-align: center;
+}
+
+/* Уведомления */
+.notification {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #4af;
+  color: #111;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-family: 'Press Start 2P', cursive;
+  font-size: 14px;
+  box-shadow: 0 0 15px #4af;
+  z-index: 1000;
+  opacity: 0.95;
+}
+
+/* Таймер приёма ставок */
+#betting-timer {
+  font-size: 14px;
+  color: #6cf;
+  font-family: 'Press Start 2P', cursive;
+  margin-top: 5px;
+}
+
+/* Множитель */
+#multiplier {
+  font-weight: bold;
+  color: #4af;
+  font-family: 'Press Start 2P', cursive;
+}
+
+/* Профиль */
+#profile-username,
+#profile-balance,
+#profile-max-multiplier,
+#profile-total-games {
+  font-weight: bold;
+  color: #a0c8ff;
+}

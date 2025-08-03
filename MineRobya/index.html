@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Главное меню Minecraft</title>
+  <link rel="stylesheet" href="style.css" />
+  <!-- Подключение шрифта Minecraft -->
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
+</head>
+<body>
+
+<header>
+  <nav class="menu-left">
+    <button data-screen="bank" class="active">Банк</button>
+    <button data-screen="trade">Торговля</button>
+    <button data-screen="crash">Краш</button> <!-- новая кнопка -->
+    <button data-screen="dice">Кости</button> <!-- новая кнопка -->
+  </nav>
+
+  <nav class="menu-right">
+  <!-- Блок для гостей -->
+  <div id="guest-controls">
+    <button class="btn-login">Вход</button>
+    <button class="btn-register">Регистрация</button>
+  </div>
+
+  <!-- Блок для вошедших пользователей -->
+<div id="user-controls" style="display:none; font-family: 'Press Start 2P', cursive; color: white; align-items: center; gap: 12px; display: flex;">
+  <div id="user-info" style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: bold;">
+    <span id="user-name"></span>
+    <span>|</span>
+    <span id="user-balance">
+  <span id="balance-value">95</span> <span class="crystal-emoji">💎</span>
+</span>
+
+  </div>
+  <button id="btn-logout" style="background-color: #ff4d4d; border: none; color: white; padding: 6px 12px; font-size: 12px; cursor: pointer; border-radius: 4px;">Выйти</button>
+</div>
+
+
+  <div class="header-marquee">
+    <div class="header-marquee-text">
+      Привет! Я бегущая строка с важными новостями! &nbsp;&nbsp; | &nbsp;&nbsp; Следите за обновлениями! &nbsp;&nbsp; | &nbsp;&nbsp; Спасибо, что играете на V+!
+    </div>
+  </div>
+</header>
+
+
+<main>
+<!-- Модальное окно Вход/Регистрация -->
+<div id="auth-modal" class="modal">
+  <div class="modal-content">
+    <span id="modal-close" class="modal-close">&times;</span>
+    
+    <div class="tabs">
+      <div id="tab-login" class="tab active">Вход</div>
+      <div id="tab-register" class="tab">Регистрация</div>
+    </div>
+    
+    <!-- Форма Вход -->
+    <form id="login-form">
+      <input type="email" id="login-email" placeholder="Email" required />
+      <input type="password" id="login-password" placeholder="Пароль" required />
+      <button type="submit">Войти</button>
+    </form>
+    
+    <!-- Форма Регистрация -->
+    <form id="register-form" style="display:none;">
+      <input type="text" id="register-username" placeholder="Имя пользователя" required />
+      <input type="email" id="register-email" placeholder="Email" required />
+      <input type="password" id="register-password" placeholder="Пароль" required />
+      <button type="submit">Зарегистрироваться</button>
+    </form>
+  </div>
+</div>
+
+  <section id="bank" class="screen active">
+  <h1>Банк Minecraft</h1>
+  <p>Здесь вы можете управлять своими ресурсами и валютой Minecraft.</p>
+
+  <form id="transfer-form" aria-label="Форма перевода другому игроку">
+    <h2>Перевести другому игроку</h2>
+    <input
+      type="text"
+      id="transfer-recipient"
+      placeholder="Имя получателя"
+      required
+      autocomplete="off"
+      spellcheck="false"
+    />
+    <input
+      type="number"
+      id="transfer-amount"
+      placeholder="Сумма"
+      min="1"
+      required
+    />
+    <button type="submit">Перевести</button>
+  </form>
+
+  <div id="top-balance">
+    <h2>Топ по балансу</h2>
+    <ol id="top-list"></ol>
+  </div>
+</section>
+
+<section id="crash" class="screen">
+  <h1>Игра Краш</h1>
+  <p>Ставьте алмазы и забирайте выигрыш до краша!</p>
+
+  <div class="crash-game-container">
+    <canvas id="graph" width="600" height="300" style="background:#111; border:1px solid #444;"></canvas>
+
+    <div class="controls">
+      <input type="number" id="bet-amount" placeholder="Ставка (💎)" min="1" />
+      <button id="start-bet">Сделать ставку</button>
+      <button id="cash-out" disabled>Забрать выигрыш</button>
+    </div>
+
+    <div id="multiplier" style="font-size: 24px; margin-top: 10px;">1.00x</div>
+    <div id="betting-timer" style="color:#a0c8ff; margin-top: 5px;"></div>
+
+    <h3>Текущие ставки игроков</h3>
+    <div id="players-bets-list" style="max-height: 150px; overflow-y: auto; background:#222; padding: 5px; color: #ccc;"></div>
+
+    <h3>История ваших ставок</h3>
+    <div id="recent-bets" style="max-height: 150px; overflow-y: auto; background:#222; padding: 5px; color: #ccc;"></div>
+
+    <h3>Профиль</h3>
+    <div>
+      Ник: <span id="profile-username"></span><br />
+      Баланс: <span id="profile-balance"></span> 💎<br />
+      Макс. множитель: <span id="profile-max-multiplier"></span><br />
+      Всего игр: <span id="profile-total-games"></span>
+    </div>
+  </div>
+</section>
+  
+
+<section id="dice" class="screen">
+  <h1>Игра в Кости</h1>
+
+  <div id="dice-lobby-creation">
+    <h2>Создать лобби</h2>
+    <form id="create-lobby-form">
+      <label>
+        Сумма ставки (💎):
+        <input type="number" id="lobby-bet-amount" min="1" required />
+      </label>
+      <label>
+        Количество игроков:
+        <select id="lobby-player-count" required>
+          <option value="2" selected>2</option>
+          <option value="3">3</option>
+          <option value="4">4</option>
+          <option value="5">5</option>
+        </select>
+      </label>
+      <button type="submit">Создать лобби</button>
+    </form>
+  </div>
+
+  <div id="dice-lobby-waiting" style="display:none;">
+    <h2>Ожидание игроков...</h2>
+    <ul id="lobby-players-list"></ul>
+    <button id="leave-lobby-btn">Выйти из лобби</button>
+  </div>
+
+  <div id="dice-game" style="display:none;">
+    <h2>Игра началась!</h2>
+    <div id="dice-results"></div>
+    <button id="roll-dice-btn">Бросить кости</button>
+    <div id="game-message"></div>
+    <button id="exit-game-btn" style="display:none;">Выйти из игры</button>
+  </div>
+</section>
+
+
+  <section id="trade" class="screen">
+  <h1>Торговля Minecraft</h1>
+  <p>Торгуйте с другими игроками, обменивайте ресурсы и предметы.</p>
+
+  <div class="trade-container">
+    <form id="create-listing-form" aria-label="Форма создания заявки на продажу">
+      <h2>Создать заявку на продажу</h2>
+      <input type="text" id="seller-name" placeholder="Ваш ник" required autocomplete="off" spellcheck="false" />
+      <input type="text" id="item-name" placeholder="Название предмета" required autocomplete="off" spellcheck="false" />
+      <input type="number" id="item-price" placeholder="Цена (💎)" min="1" required />
+      <input type="text" id="pickup-location" placeholder="Место получения" required autocomplete="off" spellcheck="false" />
+      <button type="submit">Создать заявку</button>
+    </form>
+
+    <div id="listings-container">
+      <h2>Доступные заявки</h2>
+      <ul id="listings-list"></ul>
+    </div>
+  </div>
+
+  <div id="purchase-info" style="margin-top: 20px; color: #a0c8ff; font-family: 'Press Start 2P', cursive; font-size: 12px;"></div>
+</section>
+
+
+
+
+</main>
+
+<!-- Подключение скриптов -->
+<script src="https://unpkg.com/@supabase/supabase-js@2" defer></script>
+<script src="script.js" defer></script>
+<script src="bank.js" defer></script>
+<script src="trade.js" defer></script>
+<script src="crash.js" defer></script>
+<script src="dice.js" defer></script>
+</body>
+</html>
