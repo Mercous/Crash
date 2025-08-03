@@ -346,35 +346,49 @@ const supabaseClient = window.supabaseClient;
   }
 
   function renderRecentBets(bets) {
-    recentBetsContainer.innerHTML = '';
-    bets.slice(0, 5).forEach(bet => {
-      const betElement = document.createElement('div');
-      betElement.className = 'recent-bet';
-      const multiplier = document.createElement('span');
-      multiplier.textContent = bet.multiplier.toFixed(2) + 'x';
-      multiplier.style.color = bet.crashed ? '#f44' : '#4CAF50';
-      const profit = document.createElement('span');
-      profit.textContent = (bet.profit > 0 ? '+' : '') + bet.profit + '◆';
-      profit.style.color = bet.profit > 0 ? '#4CAF50' : '#f44';
-      profit.style.fontWeight = 'bold';
-      betElement.appendChild(multiplier);
-      betElement.appendChild(profit);
-      recentBetsContainer.appendChild(betElement);
-    });
-  }
+  recentBetsContainer.innerHTML = '';
+  bets.slice(0, 5).forEach(bet => {
+    const betElement = document.createElement('div');
+    betElement.className = 'recent-bet';
+
+    // Безопасное получение multiplier
+    const multiplierValue = (bet.multiplier != null) ? bet.multiplier : 0;
+    const multiplier = document.createElement('span');
+    multiplier.textContent = multiplierValue.toFixed(2) + 'x';
+    multiplier.style.color = bet.crashed ? '#f44' : '#4CAF50';
+
+    const profit = document.createElement('span');
+    profit.textContent = (bet.profit > 0 ? '+' : '') + bet.profit + '◆';
+    profit.style.color = bet.profit > 0 ? '#4CAF50' : '#f44';
+    profit.style.fontWeight = 'bold';
+
+    betElement.appendChild(multiplier);
+    betElement.appendChild(profit);
+    recentBetsContainer.appendChild(betElement);
+  });
+}
+
 
   function updateProfileStats(bets) {
-    const user = getCurrentUser();
-    profileUsername.textContent = user.email || user.username || 'Игрок';
-    balanceDisplay.textContent = user.balance;
-    if (bets.length > 0) {
-      const maxMultiplier = Math.max(...bets.map(bet => bet.multiplier));
-      profileMaxMultiplier.textContent = maxMultiplier.toFixed(2) + 'x';
-    } else {
-      profileMaxMultiplier.textContent = '0x';
-    }
-    profileTotalGames.textContent = bets.length;
+  const user = getCurrentUser();
+  profileUsername.textContent = user.email || user.username || 'Игрок';
+  balanceDisplay.textContent = user.balance;
+
+  if (bets.length > 0) {
+    // Фильтруем ставки с валидным multiplier
+    const validMultipliers = bets
+      .map(bet => bet.multiplier)
+      .filter(m => m != null);
+
+    const maxMultiplier = validMultipliers.length > 0 ? Math.max(...validMultipliers) : 0;
+    profileMaxMultiplier.textContent = maxMultiplier.toFixed(2) + 'x';
+  } else {
+    profileMaxMultiplier.textContent = '0x';
   }
+
+  profileTotalGames.textContent = bets.length;
+}
+
 
   async function loadBetHistory() {
     const user = getCurrentUser();
@@ -413,4 +427,5 @@ const supabaseClient = window.supabaseClient;
   // Изначальная отрисовка графика
   drawGraph(1, 10);
 }
+
 window.initCrashGame = initCrashGame;
