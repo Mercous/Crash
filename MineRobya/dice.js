@@ -575,41 +575,42 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   rollDiceBtn.addEventListener('click', async () => {
-    if (hasRolled || !lobby || lobby.ended) return;
+  if (hasRolled || !lobby || lobby.ended) return;
 
-    const roll = Math.floor(Math.random() * 6) + 1;
-    hasRolled = true;
+  const roll = Math.floor(Math.random() * 6) + 1;
+  hasRolled = true;
 
-    const { data, error } = await supabaseClient.rpc('player_roll_dice', {
-      p_round_id: lobby.id,
-      p_player_id: currentUser.id,
-      p_roll_value: roll
-    });
-
-    if (error) {
-      alert('Ошибка при броске кости: ' + error.message);
-      hasRolled = false;
-      return;
-    }
-
-    const player = lobby.players.find(p => p.id === currentUser.id);
-    if (player) {
-      player.roll = roll;
-    }
-    updateDiceResultsUI();
-
-    channel.send({
-      type: 'broadcast',
-      event: 'player_rolled',
-      payload: {
-        playerId: currentUser.id,
-        roll_value: roll
-      }
-    });
-
-    gameMessageDiv.textContent = `Вы бросили: ${roll}. Ждите остальных игроков...`;
-    rollDiceBtn.disabled = true;
+  const { data: rollResult, error } = await supabaseClient.rpc('player_roll_dice', {
+    p_round_id: lobby.id,
+    p_player_id: currentUser.id,
+    p_roll_value: roll
   });
+
+  if (error) {
+    alert('Ошибка при броске кости: ' + error.message);
+    hasRolled = false;
+    return;
+  }
+
+  const player = lobby.players.find(p => p.id === currentUser.id);
+  if (player) {
+    player.roll = roll;
+  }
+  updateDiceResultsUI();
+
+  channel.send({
+    type: 'broadcast',
+    event: 'player_rolled',
+    payload: {
+      playerId: currentUser.id,
+      roll_value: roll,
+      username: currentUser.username
+    }
+  });
+
+  gameMessageDiv.textContent = `Вы бросили: ${roll}. Ждите остальных игроков...`;
+  rollDiceBtn.disabled = true;
+});
 
   leaveLobbyBtn.addEventListener('click', async () => {
     if (!lobby) return;
@@ -711,3 +712,4 @@ document.addEventListener('DOMContentLoaded', () => {
     updateLobbyPlayersUI();
   }
 });
+
