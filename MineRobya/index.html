@@ -15,7 +15,7 @@
     <button data-screen="bank" class="active">Банк</button>
     <button data-screen="trade">Торговля</button>
     <button data-screen="crash">Краш</button> <!-- новая кнопка -->
-    <button data-screen="dice">Кости</button> <!-- новая кнопка -->
+    
   </nav>
 
   <nav class="menu-right">
@@ -138,43 +138,7 @@
 </section>
   
 
-<section id="dice" class="screen">
-  <h1>Игра в Кости</h1>
 
-  <div id="dice-lobby-creation">
-    <h2>Создать лобби</h2>
-    <form id="create-lobby-form">
-      <label>
-        Сумма ставки (💎):
-        <input type="number" id="lobby-bet-amount" min="1" required />
-      </label>
-      <label>
-        Количество игроков:
-        <select id="lobby-player-count" required>
-          <option value="2" selected>2</option>
-          <option value="3">3</option>
-          <option value="4">4</option>
-          <option value="5">5</option>
-        </select>
-      </label>
-      <button type="submit">Создать лобби</button>
-    </form>
-  </div>
-
-  <div id="dice-lobby-waiting" style="display:none;">
-    <h2>Ожидание игроков...</h2>
-    <ul id="lobby-players-list"></ul>
-    <button id="leave-lobby-btn">Выйти из лобби</button>
-  </div>
-
-  <div id="dice-game" style="display:none;">
-    <h2>Игра началась!</h2>
-    <div id="dice-results"></div>
-    <button id="roll-dice-btn">Бросить кости</button>
-    <div id="game-message"></div>
-    <button id="exit-game-btn" style="display:none;">Выйти из игры</button>
-  </div>
-</section>
 
 
   <section id="trade" class="screen">
@@ -214,3 +178,4 @@
 <script src="dice.js" defer></script>
 </body>
 </html>
+
