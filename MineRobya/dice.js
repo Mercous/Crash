@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
   const supabaseClient = window.supabaseClient;
 
-  // UI элементы
+
   const sectionDice = document.getElementById('dice');
   const createLobbyForm = document.getElementById('create-lobby-form');
   const lobbyBetInput = document.getElementById('lobby-bet-amount');
@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const gameMessageDiv = document.getElementById('game-message');
   const exitGameBtn = document.getElementById('exit-game-btn');
 
-  // Контейнер для списка лобби
+ 
   const lobbyListDiv = document.createElement('div');
   lobbyListDiv.id = 'lobby-list';
   lobbyListDiv.style = 'margin-top: 20px; border: 1px solid #ccc; padding: 10px; max-height: 200px; overflow-y: auto;';
@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
   sectionDice.querySelector('#dice-lobby-creation').insertAdjacentElement('afterend', lobbyListDiv);
   const lobbyItemsDiv = document.getElementById('lobby-items');
 
-  // Состояния
+
   let currentUser = null;
   let lobby = null;
   let channel = null;
@@ -35,7 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let lobbyList = [];
 
-  // Инициализация
+  
   (async () => {
     const { data: { session } } = await supabaseClient.auth.getSession();
     if (!session || !session.user) {
@@ -423,10 +423,10 @@ document.addEventListener('DOMContentLoaded', () => {
   async function handleGameEnded() {
     if (!lobby) return;
 
-    // Находим максимальное значение броска
+    
     const maxRoll = Math.max(...lobby.players.map(p => p.roll || 0));
     
-    // Получаем список победителей (игроков с максимальным броском)
+    
     const winners = lobby.players.filter(p => p.roll === maxRoll);
     
     if (winners.length === 0) {
@@ -441,7 +441,7 @@ document.addEventListener('DOMContentLoaded', () => {
     exitGameBtn.style.display = 'inline-block';
     rollDiceBtn.disabled = true;
 
-    // Обновляем баланс если текущий пользователь победил
+    
     if (winners.some(w => w.id === currentUser.id)) {
       currentUser = await loadUserProfile(currentUser.id);
     }
@@ -724,3 +724,4 @@ document.addEventListener('DOMContentLoaded', () => {
     updateLobbyPlayersUI();
   }
 });
+
