@@ -297,6 +297,19 @@ document.addEventListener('DOMContentLoaded', () => {
     channel.on('postgres_changes', {
       event: 'update',
       schema: 'public',
+      table: 'rounds',
+      filter: `id=eq.${lobbyId}`
+    }, async ({ new: updatedRound }) => {
+      if (!lobby) return;
+      if (updatedRound.ended_at && !lobby.ended) {
+        lobby.ended = true;
+        await handleGameEnded();
+      }
+    });
+
+    channel.on('postgres_changes', {
+      event: 'update',
+      schema: 'public',
       table: 'bets',
       filter: `round_id=eq.${lobbyId}`
     }, async ({ new: updatedBet }) => {
@@ -403,35 +416,34 @@ document.addEventListener('DOMContentLoaded', () => {
     updateDiceResultsUI();
 
     if (lobby.ended && gameDiv.style.display !== 'none') {
-      showGameResults();
+      await handleGameEnded();
     }
   }
 
-  function showGameResults() {
+  async function handleGameEnded() {
     if (!lobby) return;
 
-    const winner = lobby.players.find(p => !p.crashed);
-    if (winner) {
-      gameMessageDiv.textContent = `Победитель: ${winner.username}! Выигрыш: ${winner.profit}`;
+    // Находим максимальное значение броска
+    const maxRoll = Math.max(...lobby.players.map(p => p.roll || 0));
+    
+    // Получаем список победителей (игроков с максимальным броском)
+    const winners = lobby.players.filter(p => p.roll === maxRoll);
+    
+    if (winners.length === 0) {
+      gameMessageDiv.textContent = 'Игра завершилась ничьей (нет бросков)';
+    } else if (winners.length === 1) {
+      gameMessageDiv.textContent = `Победитель: ${winners[0].username}! Выигрыш: ${winners[0].profit}`;
     } else {
-      gameMessageDiv.textContent = 'Игра завершилась ничьей.';
+      const winnerNames = winners.map(w => w.username).join(', ');
+      gameMessageDiv.textContent = `Ничья между: ${winnerNames}. Выигрыш: ${winners[0].profit} каждому`;
     }
 
-    rollDiceBtn.disabled = true;
     exitGameBtn.style.display = 'inline-block';
-  }
+    rollDiceBtn.disabled = true;
 
-  function handleGameEnded({ payload }) {
-    if (!lobby) return;
-    
-    lobby.ended = true;
-    showGameResults();
-    
-    const winner = lobby.players.find(p => !p.crashed);
-    if (winner && winner.id === currentUser.id) {
-      loadUserProfile(currentUser.id).then(user => {
-        currentUser = user;
-      });
+    // Обновляем баланс если текущий пользователь победил
+    if (winners.some(w => w.id === currentUser.id)) {
+      currentUser = await loadUserProfile(currentUser.id);
     }
   }
 
@@ -575,42 +587,42 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   rollDiceBtn.addEventListener('click', async () => {
-  if (hasRolled || !lobby || lobby.ended) return;
+    if (hasRolled || !lobby || lobby.ended) return;
 
-  const roll = Math.floor(Math.random() * 6) + 1;
-  hasRolled = true;
+    const roll = Math.floor(Math.random() * 6) + 1;
+    hasRolled = true;
 
-  const { data: rollResult, error } = await supabaseClient.rpc('player_roll_dice', {
-    p_round_id: lobby.id,
-    p_player_id: currentUser.id,
-    p_roll_value: roll
-  });
+    const { data: rollResult, error } = await supabaseClient.rpc('player_roll_dice', {
+      p_round_id: lobby.id,
+      p_player_id: currentUser.id,
+      p_roll_value: roll
+    });
 
-  if (error) {
-    alert('Ошибка при броске кости: ' + error.message);
-    hasRolled = false;
-    return;
-  }
-
-  const player = lobby.players.find(p => p.id === currentUser.id);
-  if (player) {
-    player.roll = roll;
-  }
-  updateDiceResultsUI();
-
-  channel.send({
-    type: 'broadcast',
-    event: 'player_rolled',
-    payload: {
-      playerId: currentUser.id,
-      roll_value: roll,
-      username: currentUser.username
+    if (error) {
+      alert('Ошибка при броске кости: ' + error.message);
+      hasRolled = false;
+      return;
     }
-  });
 
-  gameMessageDiv.textContent = `Вы бросили: ${roll}. Ждите остальных игроков...`;
-  rollDiceBtn.disabled = true;
-});
+    const player = lobby.players.find(p => p.id === currentUser.id);
+    if (player) {
+      player.roll = roll;
+    }
+    updateDiceResultsUI();
+
+    channel.send({
+      type: 'broadcast',
+      event: 'player_rolled',
+      payload: {
+        playerId: currentUser.id,
+        roll_value: roll,
+        username: currentUser.username
+      }
+    });
+
+    gameMessageDiv.textContent = `Вы бросили: ${roll}. Ждите остальных игроков...`;
+    rollDiceBtn.disabled = true;
+  });
 
   leaveLobbyBtn.addEventListener('click', async () => {
     if (!lobby) return;
@@ -712,4 +724,3 @@ document.addEventListener('DOMContentLoaded', () => {
     updateLobbyPlayersUI();
   }
 });
-
