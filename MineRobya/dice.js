@@ -282,13 +282,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
   channel = supabaseClient.channel('public:dice_lobby_' + lobbyId);
 
+  // Загрузка актуального состояния лобби из базы
+  await refreshLobbyState(lobbyId);
+
   // Подписка на кастомные broadcast-события
   channel.on('broadcast', { event: 'lobby_created' }, handleLobbyCreated);
   channel.on('broadcast', { event: 'player_joined' }, handlePlayerJoined);
   channel.on('broadcast', { event: 'player_left' }, handlePlayerLeft);
   channel.on('broadcast', { event: 'start_game' }, handleStartGame);
-  // Можно временно отключить, чтобы не было рассинхронизации:
-  // channel.on('broadcast', { event: 'player_rolled' }, handlePlayerRolled);
+  // channel.on('broadcast', { event: 'player_rolled' }, handlePlayerRolled); // по желанию
   channel.on('broadcast', { event: 'game_ended' }, handleGameEnded);
 
   // Подписка на обновления таблицы bets для текущего раунда
@@ -298,16 +300,13 @@ document.addEventListener('DOMContentLoaded', () => {
     table: 'bets',
     filter: `round_id=eq.${lobbyId}`
   }, ({ new: updatedBet }) => {
-    if (!lobby) return; // защита от отсутствия lobby
+    if (!lobby) return;
     if (updatedBet.roll_value === null) return;
 
     const player = lobby.players.find(p => p.id === updatedBet.user_id);
     if (player) {
       player.roll = updatedBet.roll_value;
-
-      // Обновляем счётчик бросков
       lobby.rollsDoneCount = lobby.players.filter(p => p.roll !== null).length;
-
       updateDiceResultsUI();
 
       if (lobby.rollsDoneCount === lobby.players.length) {
@@ -318,6 +317,71 @@ document.addEventListener('DOMContentLoaded', () => {
 
   await channel.subscribe();
 }
+
+// Функция загрузки и обновления lobby
+async function refreshLobbyState(lobbyId) {
+  const { data: roundData, error: roundError } = await supabaseClient
+    .from('rounds')
+    .select('id, bet_amount, max_players, game_started')
+    .eq('id', lobbyId)
+    .single();
+
+  if (roundError) {
+    console.error('Ошибка загрузки данных раунда:', roundError.message);
+    return;
+  }
+
+  const { data: bets, error: betsError } = await supabaseClient
+    .from('bets')
+    .select('user_id, roll_value, users(username)')
+    .eq('round_id', lobbyId);
+
+  if (betsError) {
+    console.error('Ошибка загрузки ставок:', betsError.message);
+    return;
+  }
+
+  const players = bets.map(b => ({
+    id: b.user_id,
+    username: b.users.username,
+    roll: b.roll_value ?? null
+  }));
+
+  if (!lobby) {
+    lobby = {
+      id: roundData.id,
+      betAmount: roundData.bet_amount,
+      maxPlayers: roundData.max_players,
+      players,
+      rollsDoneCount: players.filter(p => p.roll !== null).length,
+      gameStarted: roundData.game_started
+    };
+  } else {
+    Object.assign(lobby, {
+      id: roundData.id,
+      betAmount: roundData.bet_amount,
+      maxPlayers: roundData.max_players,
+      gameStarted: roundData.game_started
+    });
+
+    players.forEach(newPlayer => {
+      const existingPlayer = lobby.players.find(p => p.id === newPlayer.id);
+      if (existingPlayer) {
+        Object.assign(existingPlayer, newPlayer);
+      } else {
+        lobby.players.push(newPlayer);
+      }
+    });
+
+    lobby.players = lobby.players.filter(p => players.find(np => np.id === p.id));
+
+    lobby.rollsDoneCount = players.filter(p => p.roll !== null).length;
+  }
+
+  updateLobbyPlayersUI();
+  updateDiceResultsUI();
+}
+
 
 
   async function handleLobbyCreated({ payload }) {
@@ -614,6 +678,7 @@ document.addEventListener('DOMContentLoaded', () => {
     updateLobbyPlayersUI();
   }
 });
+
 
 
 
