@@ -275,22 +275,46 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   async function connectToLobbyChannel(lobbyId) {
-    if (channel) {
-      await channel.unsubscribe();
-      channel = null;
-    }
-
-    channel = supabaseClient.channel('public:dice_lobby_' + lobbyId);
-
-    channel.on('broadcast', { event: 'lobby_created' }, handleLobbyCreated);
-    channel.on('broadcast', { event: 'player_joined' }, handlePlayerJoined);
-    channel.on('broadcast', { event: 'player_left' }, handlePlayerLeft);
-    channel.on('broadcast', { event: 'start_game' }, handleStartGame);
-    channel.on('broadcast', { event: 'player_rolled' }, handlePlayerRolled);
-    channel.on('broadcast', { event: 'game_ended' }, handleGameEnded);
-
-    await channel.subscribe();
+  if (channel) {
+    await channel.unsubscribe();
+    channel = null;
   }
+
+  channel = supabaseClient.channel('public:dice_lobby_' + lobbyId);
+
+  // Подписка на кастомные broadcast-события
+  channel.on('broadcast', { event: 'lobby_created' }, handleLobbyCreated);
+  channel.on('broadcast', { event: 'player_joined' }, handlePlayerJoined);
+  channel.on('broadcast', { event: 'player_left' }, handlePlayerLeft);
+  channel.on('broadcast', { event: 'start_game' }, handleStartGame);
+  channel.on('broadcast', { event: 'player_rolled' }, handlePlayerRolled);
+  channel.on('broadcast', { event: 'game_ended' }, handleGameEnded);
+
+  // Новая подписка на обновления таблицы bets для текущего раунда
+  channel.on('postgres_changes', {
+    event: 'update',
+    schema: 'public',
+    table: 'bets',
+    filter: `round_id=eq.${lobbyId}`
+  }, ({ new: updatedBet }) => {
+    if (updatedBet.roll_value === null) return;
+
+    const player = lobby.players.find(p => p.id === updatedBet.user_id);
+    if (player) {
+      player.roll = updatedBet.roll_value;
+      updateDiceResultsUI();
+
+      lobby.rollsDoneCount = lobby.players.filter(p => p.roll !== null).length;
+
+      if (lobby.rollsDoneCount === lobby.players.length) {
+        gameMessageDiv.textContent = 'Все бросили. Ожидаем результат...';
+      }
+    }
+  });
+
+  await channel.subscribe();
+}
+
 
   async function handleLobbyCreated({ payload }) {
     lobby = payload.lobby;
@@ -570,5 +594,6 @@ document.addEventListener('DOMContentLoaded', () => {
     updateLobbyPlayersUI();
   }
 });
+
 
 
