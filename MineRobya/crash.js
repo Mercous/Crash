@@ -410,7 +410,7 @@ function initCrashGame(getCurrentUser) {
         .limit(20);
       if (error) throw error;
       
-      const roundIds = [...new Set(bets.map(bet => bet.round_id).filter(id => id)];
+      const roundIds = [...new Set(bets.map(bet => bet.round_id).filter(id => id != null))];
       const { data: rounds, error: roundsError } = await supabaseClient
         .from('rounds')
         .select('id, ended_at')
@@ -436,3 +436,4 @@ function initCrashGame(getCurrentUser) {
 }
 
 window.initCrashGame = initCrashGame;
+
