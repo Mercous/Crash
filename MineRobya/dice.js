@@ -17,11 +17,23 @@ document.addEventListener('DOMContentLoaded', () => {
   const gameMessageDiv = document.getElementById('game-message');
   const exitGameBtn = document.getElementById('exit-game-btn');
 
+  // Новый контейнер для списка лобби
+  const lobbyListDiv = document.createElement('div');
+  lobbyListDiv.id = 'lobby-list';
+  lobbyListDiv.style = 'margin-top: 20px; border: 1px solid #ccc; padding: 10px; max-height: 200px; overflow-y: auto;';
+  lobbyListDiv.innerHTML = '<h3>Доступные лобби</h3><div id="lobby-items"></div>';
+  sectionDice.querySelector('#dice-lobby-creation').insertAdjacentElement('afterend', lobbyListDiv);
+  const lobbyItemsDiv = document.getElementById('lobby-items');
+
   // Переменные состояния
   let currentUser = null;
   let lobby = null; // { id, betAmount, maxPlayers, players: [{id, username, roll}], rollsDoneCount, gameStarted }
   let channel = null;
+  let lobbyListChannel = null;
   let hasRolled = false;
+
+  // Список открытых лобби
+  let lobbyList = [];
 
   // Инициализация
   (async () => {
@@ -32,6 +44,22 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     currentUser = await loadUserProfile(session.user.id);
     showDiceScreen();
+
+    // Подписка на общий канал списка лобби
+    lobbyListChannel = supabaseClient.channel('public:dice_lobby_list');
+
+    lobbyListChannel.on('broadcast', { event: 'lobby_created' }, ({ payload }) => {
+      addLobbyToList(payload.lobby);
+    });
+
+    lobbyListChannel.on('broadcast', { event: 'lobby_closed' }, ({ payload }) => {
+      removeLobbyFromList(payload.lobbyId);
+    });
+
+    await lobbyListChannel.subscribe();
+
+    // Загрузка текущих открытых лобби из БД
+    await loadOpenLobbies();
   })();
 
   // Загрузка профиля пользователя из БД
@@ -73,6 +101,89 @@ document.addEventListener('DOMContentLoaded', () => {
     hasRolled = false;
   }
 
+  // Добавить лобби в список и отобразить
+  function addLobbyToList(newLobby) {
+    if (!lobbyList.find(l => l.id === newLobby.id)) {
+      lobbyList.push(newLobby);
+      renderLobbyList();
+    }
+  }
+
+  // Удалить лобби из списка
+  function removeLobbyFromList(lobbyId) {
+    lobbyList = lobbyList.filter(l => l.id !== lobbyId);
+    renderLobbyList();
+  }
+
+  // Отобразить список лобби в UI
+  function renderLobbyList() {
+    lobbyItemsDiv.innerHTML = '';
+    if (lobbyList.length === 0) {
+      lobbyItemsDiv.textContent = 'Нет доступных лобби';
+      return;
+    }
+    lobbyList.forEach(l => {
+      const div = document.createElement('div');
+      div.classList.add('lobby-item');
+      div.style = 'margin-bottom: 8px; padding: 6px; border: 1px solid #888; border-radius: 4px; display: flex; justify-content: space-between; align-items: center;';
+      div.textContent = `Лобби ${l.id} | Ставка: ${l.betAmount} | Игроков: ${l.players ? l.players.length : 0}/${l.maxPlayers}`;
+
+      const joinBtn = document.createElement('button');
+      joinBtn.textContent = 'Присоединиться';
+      joinBtn.style = 'margin-left: 12px; padding: 4px 8px; cursor: pointer;';
+      joinBtn.disabled = lobby !== null; // нельзя присоединяться, если вы уже в лобби
+      joinBtn.addEventListener('click', () => joinLobby(l.id));
+
+      div.appendChild(joinBtn);
+      lobbyItemsDiv.appendChild(div);
+    });
+  }
+
+  // Загрузить открытые лобби из БД
+  async function loadOpenLobbies() {
+    // Теперь из rounds с фильтром game_type='dice' и ended_at IS NULL
+    const { data: rounds, error: roundsError } = await supabaseClient
+      .from('rounds')
+      .select('id, bet_amount, max_players')
+      .eq('game_type', 'dice')
+      .is('ended_at', null);
+
+    if (roundsError) {
+      console.error('Ошибка загрузки раундов:', roundsError.message);
+      return;
+    }
+
+    // Для каждого раунда загрузим игроков из bets + users
+    lobbyList = [];
+
+    for (const round of rounds) {
+      const { data: bets, error: betsError } = await supabaseClient
+        .from('bets')
+        .select('user_id, roll_value, users(username)')
+        .eq('round_id', round.id);
+
+      if (betsError) {
+        console.error('Ошибка загрузки игроков для раунда', round.id, betsError.message);
+        continue;
+      }
+
+      const players = bets.map(b => ({
+        id: b.user_id,
+        username: b.users.username,
+        roll: b.roll_value ?? null
+      }));
+
+      lobbyList.push({
+        id: round.id,
+        betAmount: round.bet_amount,
+        maxPlayers: round.max_players,
+        players
+      });
+    }
+
+    renderLobbyList();
+  }
+
   // Создание лобби — теперь вызываем RPC create_new_dice_round
   createLobbyForm.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -94,12 +205,10 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    // Вызов RPC для создания раунда с типом dice
     const { data: newRound, error } = await supabaseClient.rpc('create_new_dice_round', {
-  p_bet_amount: betAmount,
-  p_max_players: maxPlayers
-});
-
+      p_bet_amount: betAmount,
+      p_max_players: maxPlayers
+    });
 
     if (error) {
       alert('Ошибка создания раунда: ' + error.message);
@@ -108,8 +217,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     lobby = {
       id: newRound.id,
-      betAmount: betAmount,
-      maxPlayers: maxPlayers,
+      betAmount,
+      maxPlayers,
       players: [{
         id: currentUser.id,
         username: currentUser.username,
@@ -119,16 +228,12 @@ document.addEventListener('DOMContentLoaded', () => {
       gameStarted: false
     };
 
-    // Подключаемся к каналу Supabase для этого лобби
     await connectToLobbyChannel(lobby.id);
 
-    // Размещаем ставку текущего игрока через RPC
     const { error: betError } = await supabaseClient.rpc('place_bet_dice');
-
 
     if (betError) {
       alert('Ошибка размещения ставки: ' + betError.message);
-      // Можно отписаться и выйти
       await channel.unsubscribe();
       channel = null;
       lobby = null;
@@ -136,14 +241,17 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    // Отправляем сообщение о создании лобби (для других игроков)
-    channel.send({
-      type: 'broadcast',
-      event: 'lobby_created',
-      payload: {
-        lobby
-      }
-    });
+    // Отправляем событие в общий канал списка лобби
+    if (lobbyListChannel) {
+      lobbyListChannel.send({
+        type: 'broadcast',
+        event: 'lobby_created',
+        payload: { lobby }
+      });
+    }
+
+    // Добавляем в локальный список и обновляем UI
+    addLobbyToList(lobby);
 
     createLobbyForm.style.display = 'none';
     lobbyWaitingDiv.style.display = 'block';
@@ -170,21 +278,18 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Обработчики событий канала
-
   function handleLobbyCreated({ payload }) {
     lobby = payload.lobby;
     updateLobbyPlayersUI();
   }
 
-  // Игрок присоединился — вызываем place_bet_dice RPC и рассылаем событие
   async function handlePlayerJoined({ payload }) {
     const player = payload.player;
     if (!lobby.players.find(p => p.id === player.id)) {
-      // Вызываем RPC для размещения ставки новым игроком
       const { error: betError } = await supabaseClient.rpc('place_bet_dice');
 
-      if (error) {
-        console.error('Ошибка размещения ставки для игрока', player.username, error.message);
+      if (betError) {
+        console.error('Ошибка размещения ставки для игрока', player.username, betError.message);
         return;
       }
 
@@ -198,6 +303,16 @@ document.addEventListener('DOMContentLoaded', () => {
           event: 'start_game',
           payload: { lobby }
         });
+
+        // Убираем лобби из общего списка
+        if (lobbyListChannel) {
+          lobbyListChannel.send({
+            type: 'broadcast',
+            event: 'lobby_closed',
+            payload: { lobbyId: lobby.id }
+          });
+        }
+        removeLobbyFromList(lobby.id);
       }
     }
   }
@@ -227,14 +342,13 @@ document.addEventListener('DOMContentLoaded', () => {
     hasRolled = false;
   }
 
-  // Игрок бросил кости — отправляем RPC для сохранения результата и проверяем завершение
+  // Игрок бросил кости
   rollDiceBtn.addEventListener('click', async () => {
     if (hasRolled || !lobby) return;
 
     const roll = Math.floor(Math.random() * 6) + 1;
     hasRolled = true;
 
-    // Отправляем RPC, чтобы сохранить бросок и проверить игру
     const { data, error } = await supabaseClient.rpc('player_roll_dice', {
       round_id: lobby.id,
       player_id: currentUser.id,
@@ -249,10 +363,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     gameMessageDiv.textContent = `Вы бросили: ${roll}. Ждите остальных игроков...`;
     rollDiceBtn.disabled = true;
-    // Сервер через Realtime оповестит всех игроков о бросках и завершении
   });
 
-  // Обработка события броска игрока
   function handlePlayerRolled({ payload }) {
     const { playerId, roll } = payload;
 
@@ -266,16 +378,13 @@ document.addEventListener('DOMContentLoaded', () => {
     lobby.rollsDoneCount = lobby.players.filter(p => p.roll !== null).length;
 
     if (lobby.rollsDoneCount === lobby.players.length) {
-      // Все бросили — победитель уже определён на сервере, ждём событие game_ended
       gameMessageDiv.textContent = 'Все бросили. Ожидаем результат...';
     }
   }
 
-  // Игра завершена — сервер присылает победителя и результаты
   function handleGameEnded({ payload }) {
     const { winner, rolls } = payload;
 
-    // Обновляем броски игроков
     lobby.players.forEach(p => {
       const playerRoll = rolls.find(r => r.player_id === p.id);
       p.roll = playerRoll ? playerRoll.roll : null;
@@ -292,7 +401,6 @@ document.addEventListener('DOMContentLoaded', () => {
     exitGameBtn.style.display = 'inline-block';
   }
 
-  // Обновление списка игроков в лобби
   function updateLobbyPlayersUI() {
     lobbyPlayersList.innerHTML = '';
     lobby.players.forEach(p => {
@@ -302,7 +410,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Обновление результатов бросков
   function updateDiceResultsUI() {
     diceResultsDiv.innerHTML = '';
     lobby.players.forEach(p => {
@@ -312,7 +419,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Выход из лобби до старта игры
   leaveLobbyBtn.addEventListener('click', async () => {
     if (!lobby) return;
 
@@ -329,7 +435,6 @@ document.addEventListener('DOMContentLoaded', () => {
     resetUI();
   });
 
-  // Выход из игры после завершения
   exitGameBtn.addEventListener('click', async () => {
     if (!lobby) return;
 
@@ -340,8 +445,13 @@ document.addEventListener('DOMContentLoaded', () => {
     resetUI();
   });
 
-  // Присоединение к существующему лобби (если реализуете)
+  // Присоединение к существующему лобби
   async function joinLobby(lobbyId) {
+    if (lobby) {
+      alert('Вы уже в лобби');
+      return;
+    }
+
     await connectToLobbyChannel(lobbyId);
 
     channel.send({
@@ -357,6 +467,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     createLobbyForm.style.display = 'none';
     lobbyWaitingDiv.style.display = 'block';
-  }
 
+    // Удаляем лобби из списка открытых, т.к. вы в нем
+    removeLobbyFromList(lobbyId);
+  }
 });
