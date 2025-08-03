@@ -291,17 +291,16 @@ document.addEventListener('DOMContentLoaded', () => {
     channel.on('broadcast', { event: 'player_joined' }, handlePlayerJoined);
     channel.on('broadcast', { event: 'player_left' }, handlePlayerLeft);
     channel.on('broadcast', { event: 'start_game' }, handleStartGame);
-    // channel.on('broadcast', { event: 'player_rolled' }, handlePlayerRolled); // по желанию
     channel.on('broadcast', { event: 'game_ended' }, handleGameEnded);
 
-    // Подписка на обновления таблицы bets для текущего раунда
+    // ВАЖНО: подписка на обновления таблицы bets для текущего раунда
     channel.on('postgres_changes', {
       event: 'update',
       schema: 'public',
       table: 'bets',
       filter: `round_id=eq.${lobbyId}`
     }, ({ new: updatedBet }) => {
-      console.log('Realtime bets update:', updatedBet);
+      console.log('[Realtime] bets update:', updatedBet);
       if (!lobby) return;
       if (updatedBet.roll_value === null) return;
 
@@ -314,10 +313,17 @@ document.addEventListener('DOMContentLoaded', () => {
         if (lobby.rollsDoneCount === lobby.players.length) {
           gameMessageDiv.textContent = 'Все бросили. Ожидаем результат...';
         }
+      } else {
+        console.warn('Игрок с id', updatedBet.user_id, 'не найден в lobby.players');
       }
     });
 
-    await channel.subscribe();
+    const { error } = await channel.subscribe(status => {
+      console.log('[Channel subscribe status]', status);
+    });
+    if (error) {
+      console.error('Ошибка подписки на канал:', error);
+    }
   }
 
   // Функция загрузки и обновления lobby без перезаписи ссылки
@@ -519,45 +525,6 @@ document.addEventListener('DOMContentLoaded', () => {
     gameMessageDiv.textContent = `Вы бросили: ${roll}. Ждите остальных игроков...`;
     rollDiceBtn.disabled = true;
   });
-
-  function handlePlayerRolled({ payload }) {
-    console.log('player_rolled event received:', payload);
-
-    const playerId = payload.playerId ?? payload.player_id;
-    const roll = payload.roll ?? payload.roll_value;
-
-    const player = lobby.players.find(p => p.id === playerId);
-    if (player) {
-      player.roll = roll;
-    }
-
-    updateDiceResultsUI();
-
-    lobby.rollsDoneCount = lobby.players.filter(p => p.roll !== null).length;
-
-    if (lobby.rollsDoneCount === lobby.players.length) {
-      gameMessageDiv.textContent = 'Все бросили. Ожидаем результат...';
-    }
-  }
-
-  function handleGameEnded({ payload }) {
-    const { winner, rolls } = payload;
-
-    lobby.players.forEach(p => {
-      const playerRoll = rolls.find(r => r.player_id === p.id);
-      p.roll = playerRoll ? playerRoll.roll : null;
-    });
-    updateDiceResultsUI();
-
-    if (winner) {
-      gameMessageDiv.textContent = `Победитель: ${winner.username}! Выигрыш зачислен на счёт.`;
-    } else {
-      gameMessageDiv.textContent = 'Игра завершилась ничьей.';
-    }
-
-    rollDiceBtn.disabled = true;
-    exitGameBtn.style.display = 'inline-block';
-  }
 
   function updateLobbyPlayersUI() {
     lobbyPlayersList.innerHTML = '';
