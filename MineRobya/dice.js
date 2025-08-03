@@ -373,11 +373,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const roll = Math.floor(Math.random() * 6) + 1;
     hasRolled = true;
 
-    const { data, error } = await supabaseClient.rpc('player_roll_dice', {
-      round_id: lobby.id,
-      player_id: currentUser.id,
-      roll_value: roll
-    });
+   const { data, error } = await supabaseClient.rpc('player_roll_dice', {
+  p_round_id: lobby.id,
+  p_player_id: currentUser.id,
+  p_roll_value: roll
+});
+
 
     if (error) {
       alert('Ошибка при броске кости: ' + error.message);
@@ -542,3 +543,4 @@ document.addEventListener('DOMContentLoaded', () => {
     updateLobbyPlayersUI();
   }
 });
+
