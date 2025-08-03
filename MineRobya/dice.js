@@ -243,6 +243,7 @@ document.addEventListener('DOMContentLoaded', () => {
       roll: b.roll_value ?? null
     }));
 
+    // Создаём объект lobby до подписки, чтобы подписчики ссылались на актуальный объект
     lobby = {
       id: roundData.id,
       betAmount: roundData.bet_amount,
@@ -275,135 +276,133 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   async function connectToLobbyChannel(lobbyId) {
-  if (channel) {
-    await channel.unsubscribe();
-    channel = null;
-  }
-
-  channel = supabaseClient.channel('public:dice_lobby_' + lobbyId);
-
-  // Загрузка актуального состояния лобби из базы
-  await refreshLobbyState(lobbyId);
-
-  // Подписка на кастомные broadcast-события
-  channel.on('broadcast', { event: 'lobby_created' }, handleLobbyCreated);
-  channel.on('broadcast', { event: 'player_joined' }, handlePlayerJoined);
-  channel.on('broadcast', { event: 'player_left' }, handlePlayerLeft);
-  channel.on('broadcast', { event: 'start_game' }, handleStartGame);
-  // channel.on('broadcast', { event: 'player_rolled' }, handlePlayerRolled); // по желанию
-  channel.on('broadcast', { event: 'game_ended' }, handleGameEnded);
-
-  // Подписка на обновления таблицы bets для текущего раунда
-  channel.on('postgres_changes', {
-    event: 'update',
-    schema: 'public',
-    table: 'bets',
-    filter: `round_id=eq.${lobbyId}`
-  }, ({ new: updatedBet }) => {
-    if (!lobby) return;
-    if (updatedBet.roll_value === null) return;
-
-    const player = lobby.players.find(p => p.id === updatedBet.user_id);
-    if (player) {
-      player.roll = updatedBet.roll_value;
-      lobby.rollsDoneCount = lobby.players.filter(p => p.roll !== null).length;
-      updateDiceResultsUI();
-
-      if (lobby.rollsDoneCount === lobby.players.length) {
-        gameMessageDiv.textContent = 'Все бросили. Ожидаем результат...';
-      }
+    if (channel) {
+      await channel.unsubscribe();
+      channel = null;
     }
-  });
 
-  await channel.subscribe();
-}
+    channel = supabaseClient.channel('public:dice_lobby_' + lobbyId);
 
-// Функция загрузки и обновления lobby
-async function refreshLobbyState(lobbyId) {
-  const { data: roundData, error: roundError } = await supabaseClient
-    .from('rounds')
-    .select('id, bet_amount, max_players, game_started')
-    .eq('id', lobbyId)
-    .single();
+    // Загрузка актуального состояния лобби из базы и обновление lobby без перезаписи ссылки
+    await refreshLobbyState(lobbyId);
 
-  if (roundError) {
-    console.error('Ошибка загрузки данных раунда:', roundError.message);
-    return;
-  }
+    // Подписка на кастомные broadcast-события
+    channel.on('broadcast', { event: 'lobby_created' }, handleLobbyCreated);
+    channel.on('broadcast', { event: 'player_joined' }, handlePlayerJoined);
+    channel.on('broadcast', { event: 'player_left' }, handlePlayerLeft);
+    channel.on('broadcast', { event: 'start_game' }, handleStartGame);
+    // channel.on('broadcast', { event: 'player_rolled' }, handlePlayerRolled); // по желанию
+    channel.on('broadcast', { event: 'game_ended' }, handleGameEnded);
 
-  const { data: bets, error: betsError } = await supabaseClient
-    .from('bets')
-    .select('user_id, roll_value, users(username)')
-    .eq('round_id', lobbyId);
+    // Подписка на обновления таблицы bets для текущего раунда
+    channel.on('postgres_changes', {
+      event: 'update',
+      schema: 'public',
+      table: 'bets',
+      filter: `round_id=eq.${lobbyId}`
+    }, ({ new: updatedBet }) => {
+      console.log('Realtime bets update:', updatedBet);
+      if (!lobby) return;
+      if (updatedBet.roll_value === null) return;
 
-  if (betsError) {
-    console.error('Ошибка загрузки ставок:', betsError.message);
-    return;
-  }
+      const player = lobby.players.find(p => p.id === updatedBet.user_id);
+      if (player) {
+        player.roll = updatedBet.roll_value;
+        lobby.rollsDoneCount = lobby.players.filter(p => p.roll !== null).length;
+        updateDiceResultsUI();
 
-  const players = bets.map(b => ({
-    id: b.user_id,
-    username: b.users.username,
-    roll: b.roll_value ?? null
-  }));
-
-  if (!lobby) {
-    lobby = {
-      id: roundData.id,
-      betAmount: roundData.bet_amount,
-      maxPlayers: roundData.max_players,
-      players,
-      rollsDoneCount: players.filter(p => p.roll !== null).length,
-      gameStarted: roundData.game_started
-    };
-  } else {
-    Object.assign(lobby, {
-      id: roundData.id,
-      betAmount: roundData.bet_amount,
-      maxPlayers: roundData.max_players,
-      gameStarted: roundData.game_started
-    });
-
-    players.forEach(newPlayer => {
-      const existingPlayer = lobby.players.find(p => p.id === newPlayer.id);
-      if (existingPlayer) {
-        Object.assign(existingPlayer, newPlayer);
-      } else {
-        lobby.players.push(newPlayer);
+        if (lobby.rollsDoneCount === lobby.players.length) {
+          gameMessageDiv.textContent = 'Все бросили. Ожидаем результат...';
+        }
       }
     });
 
-    lobby.players = lobby.players.filter(p => players.find(np => np.id === p.id));
-
-    lobby.rollsDoneCount = players.filter(p => p.roll !== null).length;
+    await channel.subscribe();
   }
 
-  updateLobbyPlayersUI();
-  updateDiceResultsUI();
-}
+  // Функция загрузки и обновления lobby без перезаписи ссылки
+  async function refreshLobbyState(lobbyId) {
+    const { data: roundData, error: roundError } = await supabaseClient
+      .from('rounds')
+      .select('id, bet_amount, max_players, game_started')
+      .eq('id', lobbyId)
+      .single();
 
+    if (roundError) {
+      console.error('Ошибка загрузки данных раунда:', roundError.message);
+      return;
+    }
 
+    const { data: bets, error: betsError } = await supabaseClient
+      .from('bets')
+      .select('user_id, roll_value, users(username)')
+      .eq('round_id', lobbyId);
+
+    if (betsError) {
+      console.error('Ошибка загрузки ставок:', betsError.message);
+      return;
+    }
+
+    const players = bets.map(b => ({
+      id: b.user_id,
+      username: b.users.username,
+      roll: b.roll_value ?? null
+    }));
+
+    if (!lobby) {
+      lobby = {
+        id: roundData.id,
+        betAmount: roundData.bet_amount,
+        maxPlayers: roundData.max_players,
+        players,
+        rollsDoneCount: players.filter(p => p.roll !== null).length,
+        gameStarted: roundData.game_started
+      };
+    } else {
+      Object.assign(lobby, {
+        id: roundData.id,
+        betAmount: roundData.bet_amount,
+        maxPlayers: roundData.max_players,
+        gameStarted: roundData.game_started
+      });
+
+      players.forEach(newPlayer => {
+        const existingPlayer = lobby.players.find(p => p.id === newPlayer.id);
+        if (existingPlayer) {
+          Object.assign(existingPlayer, newPlayer);
+        } else {
+          lobby.players.push(newPlayer);
+        }
+      });
+
+      lobby.players = lobby.players.filter(p => players.find(np => np.id === p.id));
+
+      lobby.rollsDoneCount = players.filter(p => p.roll !== null).length;
+    }
+
+    updateLobbyPlayersUI();
+    updateDiceResultsUI();
+  }
 
   async function handleLobbyCreated({ payload }) {
-  if (!lobby) {
-    lobby = payload.lobby;
-  } else {
-    Object.assign(lobby, payload.lobby);
+    if (!lobby) {
+      lobby = payload.lobby;
+    } else {
+      Object.assign(lobby, payload.lobby);
 
-    // Обновляем игроков по id, сохраняя ссылки
-    payload.lobby.players.forEach(newPlayer => {
-      const existingPlayer = lobby.players.find(p => p.id === newPlayer.id);
-      if (existingPlayer) {
-        Object.assign(existingPlayer, newPlayer);
-      } else {
-        lobby.players.push(newPlayer);
-      }
-    });
+      // Обновляем игроков по id, сохраняя ссылки
+      payload.lobby.players.forEach(newPlayer => {
+        const existingPlayer = lobby.players.find(p => p.id === newPlayer.id);
+        if (existingPlayer) {
+          Object.assign(existingPlayer, newPlayer);
+        } else {
+          lobby.players.push(newPlayer);
+        }
+      });
+    }
+    updateLobbyPlayersUI();
+    updateDiceResultsUI();
   }
-  updateLobbyPlayersUI();
-  updateDiceResultsUI();
-}
-
 
   async function handlePlayerJoined({ payload }) {
     const player = payload.player;
@@ -426,36 +425,35 @@ async function refreshLobbyState(lobbyId) {
     lobby.players.push({ ...player, roll: null });
     updateLobbyPlayersUI();
 
-   if (lobby.players.length === lobby.maxPlayers && !lobby.gameStarted) {
-  const { error: startError } = await supabaseClient.rpc('start_dice_round', { p_round_id: lobby.id });
-  if (startError) {
-    console.error('Ошибка запуска игры:', startError.message);
-    return;
-  }
+    if (lobby.players.length === lobby.maxPlayers && !lobby.gameStarted) {
+      const { error: startError } = await supabaseClient.rpc('start_dice_round', { p_round_id: lobby.id });
+      if (startError) {
+        console.error('Ошибка запуска игры:', startError.message);
+        return;
+      }
 
-  lobby.gameStarted = true;
+      lobby.gameStarted = true;
 
-  channel.send({
-    type: 'broadcast',
-    event: 'start_game',
-    payload: { lobby }
-  });
+      channel.send({
+        type: 'broadcast',
+        event: 'start_game',
+        payload: { lobby }
+      });
 
-  // Обновляем UI создателя вручную
-  if (currentUser.id === lobby.players[0].id) { // если текущий — создатель
-    handleStartGame({ payload: { lobby } });
-  }
+      // Обновляем UI создателя вручную
+      if (currentUser.id === lobby.players[0].id) { // если текущий — создатель
+        handleStartGame({ payload: { lobby } });
+      }
 
-  if (lobbyListChannel) {
-    lobbyListChannel.send({
-      type: 'broadcast',
-      event: 'lobby_closed',
-      payload: { lobbyId: lobby.id }
-    });
-  }
-  removeLobbyFromList(lobby.id);
-}
-
+      if (lobbyListChannel) {
+        lobbyListChannel.send({
+          type: 'broadcast',
+          event: 'lobby_closed',
+          payload: { lobbyId: lobby.id }
+        });
+      }
+      removeLobbyFromList(lobby.id);
+    }
   }
 
   async function handlePlayerLeft({ payload }) {
@@ -621,8 +619,7 @@ async function refreshLobbyState(lobbyId) {
       return;
     }
 
-    await connectToLobbyChannel(lobbyId);
-
+    // Загружаем данные лобби и игроков до подписки
     const { data: roundData, error: roundError } = await supabaseClient
       .from('rounds')
       .select('id, bet_amount, max_players, game_started')
@@ -659,6 +656,8 @@ async function refreshLobbyState(lobbyId) {
       gameStarted: roundData.game_started
     };
 
+    await connectToLobbyChannel(lobby.id);
+
     channel.send({
       type: 'broadcast',
       event: 'player_joined',
@@ -678,9 +677,3 @@ async function refreshLobbyState(lobbyId) {
     updateLobbyPlayersUI();
   }
 });
-
-
-
-
-
-
