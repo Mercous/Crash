@@ -1,6 +1,4 @@
-// bank.js
-// Здесь нужно либо повторно инициализировать supabaseClient, либо получить из script.js
-// Для простоты повторим инициализацию (используйте те же URL и KEY)
+
 
 const supabaseClient = window.supabaseClient;
 
@@ -14,7 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let currentUser = null;
 
-  // Получить текущего пользователя и показать баланс
+  
   async function loadUser() {
     const {
       data: { user },
@@ -30,7 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     currentUser = user;
 
-    // Получить профиль из таблицы users
+   
     const { data, error: profileError } = await supabaseClient
       .from('users')
       .select('username, balance')
@@ -47,7 +45,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Обработчик формы перевода
+ 
   transferForm.addEventListener('submit', async (e) => {
     e.preventDefault();
 
@@ -68,7 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    // Вызов RPC-функции transfer_crystals
+  
     const { error } = await supabaseClient.rpc('transfer_crystals', {
       sender: currentUser.id,
       recipient_name: recipientName,
@@ -79,17 +77,17 @@ document.addEventListener('DOMContentLoaded', () => {
       alert('Ошибка перевода: ' + error.message);
     } else {
       alert(`Успешно переведено ${amount} кристаллов игроку ${recipientName}`);
-      // Очистить форму
+   
       transferRecipientInput.value = '';
       transferAmountInput.value = '';
-      // Обновить баланс
+
       await loadUser();
-      // Обновить топ
+  
       await loadTopBalance();
     }
   });
 
-  // Загрузка топа игроков по балансу
+
   async function loadTopBalance() {
     const { data, error } = await supabaseClient
       .from('users')
@@ -116,9 +114,10 @@ document.addEventListener('DOMContentLoaded', () => {
       .join('');
   }
 
-  // При загрузке страницы
+
   (async () => {
     await loadUser();
     await loadTopBalance();
   })();
 });
+
