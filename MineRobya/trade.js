@@ -60,7 +60,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-  
+    // Показываем только непроданные заявки
     const activeListings = data.filter(listing => !listing.sold);
 
     if (activeListings.length === 0) {
@@ -81,7 +81,7 @@ document.addEventListener('DOMContentLoaded', () => {
   .join('');
 
 
-  
+    // Навесить обработчики на кнопки «Купить»
     document.querySelectorAll('.buy-button').forEach(button => {
       button.addEventListener('click', () => {
         const tradeId = button.getAttribute('data-id');
@@ -98,7 +98,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   purchaseInfo.textContent = 'Обработка покупки...';
 
-
+  // Вызов с правильными именами параметров
   const { data, error } = await supabaseClient.rpc('buy_trade', {
     p_buyer_id: currentUser.id,
     p_trade_id: tradeId,
@@ -117,7 +117,7 @@ document.addEventListener('DOMContentLoaded', () => {
     return;
   }
 
-
+  // data — строка с местом получения
   purchaseInfo.textContent = `Покупка успешна! Место получения: ${data}`;
 
   await loadListings();
@@ -194,4 +194,3 @@ document.addEventListener('DOMContentLoaded', () => {
     await loadListings();
   })();
 });
-

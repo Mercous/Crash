@@ -436,4 +436,3 @@ function initCrashGame(getCurrentUser) {
 }
 
 window.initCrashGame = initCrashGame;
-

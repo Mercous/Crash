@@ -3,45 +3,63 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Главное меню V+</title>
+  <title>Главное меню Heraklion</title>
   <link rel="stylesheet" href="style.css" />
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
 </head>
 <body>
 
-<header>
+<header class="header-container">
   <nav class="menu-left">
-    <button data-screen="bank" class="active">Банк</button>
-    <button data-screen="trade">Торговля</button>
-    <button data-screen="crash">Краш</button> 
-    
-  </nav>
-
-  <nav class="menu-right">
-  <div id="guest-controls">
-    <button class="btn-login">Вход</button>
-    <button class="btn-register">Регистрация</button>
-  </div>
-
-<div id="user-controls" style="display:none; font-family: 'Press Start 2P', cursive; color: white; align-items: center; gap: 12px; display: flex;">
-  <div id="user-info" style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: bold;">
-    <span id="user-name"></span>
-    <span>|</span>
-    <span id="user-balance">
-  <span id="balance-value">95</span> <span class="crystal-emoji">💎</span>
-</span>
-
-  </div>
-  <button id="btn-logout" style="background-color: #ff4d4d; border: none; color: white; padding: 6px 12px; font-size: 12px; cursor: pointer; border-radius: 4px;">Выйти</button>
-</div>
-
-
-  <div class="header-marquee">
-    <div class="header-marquee-text">
-      Привет! Я бегущая строка с важными новостями! &nbsp;&nbsp; | &nbsp;&nbsp; Следите за обновлениями! &nbsp;&nbsp; | &nbsp;&nbsp; Спасибо, что играете на V+!
+  <div class="dropdown">
+    <button class="dropbtn">Системы</button>
+    <div class="dropdown-content">
+      <button data-screen="bank" class="menu-btn">Банк</button>
+      <button data-screen="trade" class="menu-btn">Торговля</button>
     </div>
   </div>
+
+  <div class="dropdown">
+    <button class="dropbtn">Игры</button>
+    <div class="dropdown-content">
+      <button id="btn-crash" class="menu-btn" data-screen="crash">Краш</button>
+      <!-- Можно добавить другие игры -->
+    </div>
+  </div>
+</nav>
+
+
+  <div class="marquee-wrapper" aria-label="Бегущая строка с новостями">
+    <div class="marquee">
+      <span>Привет! Спасибо что зашел в структуру Heraklion &nbsp;&nbsp; | &nbsp;&nbsp; Следите за обновлениями! &nbsp;&nbsp; | &nbsp;&nbsp; Спасибо, что играете на Adventora!</span>
+    </div>
+  </div>
+
+  <div class="profile-block" aria-label="Профиль пользователя" style="display: flex; align-items: center; gap: 12px;">
+    
+    <!-- Блок для гостя -->
+    <div id="guest-controls" style="display: flex; gap: 10px; font-family: 'Press Start 2P', cursive; color: white;">
+      <button class="btn-login" style="padding: 8px 16px; font-size: 14px; cursor: pointer;">Войти</button>
+      <button class="btn-register" style="padding: 8px 16px; font-size: 14px; cursor: pointer;">Регистрация</button>
+    </div>
+
+    <!-- Блок для авторизованного пользователя (по умолчанию скрыт) -->
+    <div id="user-controls" style="display: none; align-items: center; gap: 12px; font-family: 'Press Start 2P', cursive; color: white;">
+      <div id="user-info" style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: bold;">
+        <span id="user-name">Really</span>
+        <span>|</span>
+        <span id="user-balance">
+          <span id="balance-value">1654</span> <span class="crystal-emoji">💎</span>
+        </span>
+      </div>
+      <button id="btn-logout" style="background-color: #ff4d4d; border: none; color: white; padding: 6px 12px; font-size: 12px; cursor: pointer; border-radius: 4px;">Выйти</button>
+    </div>
+
+  </div>
 </header>
+
+
+
 
 
 <main>
@@ -164,6 +182,12 @@
 
 
 </main>
+<footer class="site-footer">
+  <div class="footer-content">
+    <p>Техническая поддержка и вопросы по сайту:</p>
+    <p>Связь: <a href="https://discord.gg/AtBEnnqZGD" target="_blank" rel="noopener">Дискорд проекта</a></p>
+  </div>
+</footer>
 
 
 <script src="https://unpkg.com/@supabase/supabase-js@2" defer></script>
@@ -173,6 +197,5 @@
 <script src="crash.js" defer></script>
 </body>
 </html>
-
 
 

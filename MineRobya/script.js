@@ -5,7 +5,7 @@ window.supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 window.currentUser = null;
 
 document.addEventListener('DOMContentLoaded', () => {
-  
+  // Переключение вкладок меню (Банк / Торговля / Краш)
   const buttons = document.querySelectorAll('nav.menu-left button[data-screen]');
   const screens = document.querySelectorAll('main .screen');
 
@@ -13,17 +13,17 @@ document.addEventListener('DOMContentLoaded', () => {
     button.addEventListener('click', () => {
       const targetId = button.dataset.screen;
 
-      
+      // Убираем active у всех вкладок и кнопок
       screens.forEach(screen => screen.classList.remove('active'));
       buttons.forEach(btn => btn.classList.remove('active'));
 
-      
+      // Добавляем active к выбранной вкладке и кнопке
       document.getElementById(targetId).classList.add('active');
       button.classList.add('active');
     });
   });
 
-
+  // Элементы управления модалкой аутентификации
   const authModal = document.getElementById('auth-modal');
   const btnLogin = document.querySelector('.btn-login');
   const btnRegister = document.querySelector('.btn-register');
@@ -42,7 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
     authModal.classList.remove('active');
   }
 
-
+  // Переключение вкладок формы аутентификации
   const tabLogin = document.getElementById('tab-login');
   const tabRegister = document.getElementById('tab-register');
   const loginForm = document.getElementById('login-form');
@@ -65,7 +65,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
- 
+  // Обработка формы Вход
   loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const email = document.getElementById('login-email').value;
@@ -80,8 +80,141 @@ document.addEventListener('DOMContentLoaded', () => {
       await onUserLogin(data.user);
     }
   });
+// Анимация для разных типов меню
+function animateEffect(button, screenType) {
+  const btnRect = button.getBoundingClientRect();
+
+  if (screenType === 'bank') {
+    // Падающие монетки внутри кнопки
+    const coinContainer = document.createElement('div');
+    coinContainer.style.position = 'fixed';
+    coinContainer.style.left = btnRect.left + 'px';
+    coinContainer.style.top = btnRect.top + 'px';
+    coinContainer.style.width = btnRect.width + 'px';
+    coinContainer.style.height = btnRect.height + 'px';
+    coinContainer.style.pointerEvents = 'none';
+    coinContainer.style.overflow = 'visible';
+    coinContainer.style.zIndex = 1000;
+    document.body.appendChild(coinContainer);
+
+    const createCoin = () => {
+      const coin = document.createElement('span');
+      coin.textContent = '💰';
+      coin.style.position = 'absolute';
+      coin.style.left = Math.random() * btnRect.width + 'px';
+      coin.style.top = '0px';
+      coin.style.fontSize = '18px';
+      coin.style.opacity = '0.9';
+      coin.style.transition = 'transform 1.5s linear, opacity 1.5s linear';
+      coinContainer.appendChild(coin);
+
+      requestAnimationFrame(() => {
+        coin.style.transform = `translateY(${btnRect.height + 30}px) rotate(${Math.random()*360}deg)`;
+        coin.style.opacity = '0';
+      });
+
+      coin.addEventListener('transitionend', () => {
+        coin.remove();
+      });
+    };
+
+    // Создаём несколько монеток с интервалом
+    let coinsCount = 10;
+    let interval = setInterval(() => {
+      if (coinsCount <= 0) {
+        clearInterval(interval);
+        setTimeout(() => coinContainer.remove(), 1600);
+        return;
+      }
+      createCoin();
+      coinsCount--;
+    }, 100);
+
+  } else if (screenType === 'trade') {
+    // Разлетающиеся предметы (кирка, топор, меч)
+    const items = ['⛏️', '🪓', '⚔️'];
+    for (let i = 0; i < 10; i++) {
+      const item = document.createElement('span');
+      item.textContent = items[Math.floor(Math.random() * items.length)];
+      item.style.position = 'fixed';
+      item.style.left = (btnRect.left + btnRect.width / 2) + 'px';
+      item.style.top = (btnRect.top + btnRect.height / 2) + 'px';
+      item.style.fontSize = '20px';
+      item.style.pointerEvents = 'none';
+      item.style.userSelect = 'none';
+      item.style.zIndex = 1000;
+      item.style.transition = 'transform 0.8s ease-out, opacity 0.8s ease-out';
+
+      document.body.appendChild(item);
+
+      const angle = Math.random() * 2 * Math.PI;
+      const distance = 80 + Math.random() * 40;
+
+      requestAnimationFrame(() => {
+        item.style.transform = `translate(${Math.cos(angle) * distance}px, ${Math.sin(angle) * distance}px) scale(0.5)`;
+        item.style.opacity = '0';
+      });
+
+      item.addEventListener('transitionend', () => {
+        item.remove();
+      });
+    }
+
+  } else if (screenType === 'crash') {
+    // Разлетающиеся алмазики
+    for (let i = 0; i < 10; i++) {
+      const diamond = document.createElement('span');
+      diamond.textContent = '💎';
+      diamond.style.position = 'fixed';
+      diamond.style.left = (btnRect.left + btnRect.width / 2) + 'px';
+      diamond.style.top = (btnRect.top + btnRect.height / 2) + 'px';
+      diamond.style.fontSize = '20px';
+      diamond.style.pointerEvents = 'none';
+      diamond.style.userSelect = 'none';
+      diamond.style.zIndex = 1000;
+      diamond.style.transition = 'transform 0.8s ease-out, opacity 0.8s ease-out';
+
+      document.body.appendChild(diamond);
+
+      const angle = Math.random() * 2 * Math.PI;
+      const distance = 80 + Math.random() * 40;
+
+      requestAnimationFrame(() => {
+        diamond.style.transform = `translate(${Math.cos(angle) * distance}px, ${Math.sin(angle) * distance}px) scale(0.5)`;
+        diamond.style.opacity = '0';
+      });
+
+      diamond.addEventListener('transitionend', () => {
+        diamond.remove();
+      });
+    }
+  }
+}
+
+// Обновлённый обработчик клика по кнопкам меню
+document.querySelectorAll('.menu-btn').forEach(button => {
+  button.addEventListener('click', () => {
+    // Получаем тип экрана из data-screen (например, 'bank', 'trade', 'crash')
+    const screenType = button.dataset.screen;
+
+    // Запускаем нужную анимацию
+    animateEffect(button, screenType);
+
+    // Активируем кнопку сразу
+    document.querySelectorAll('.menu-btn').forEach(btn => btn.classList.remove('active'));
+    button.classList.add('active');
+
+    // Переключаем экраны с задержкой, чтобы анимация успела
+    setTimeout(() => {
+      document.querySelectorAll('main .screen').forEach(screen => screen.classList.remove('active'));
+      const targetScreen = document.getElementById(screenType);
+      if (targetScreen) targetScreen.classList.add('active');
+    }, 800);
+  });
+});
 
 
+  // Обработка формы Регистрация
   registerForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const username = document.getElementById('register-username').value.trim();
@@ -110,7 +243,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-
+  // Кнопка входа через Discord OAuth
   const discordLoginBtn = document.getElementById('discord-login');
   if (discordLoginBtn) {
     discordLoginBtn.addEventListener('click', async () => {
@@ -124,7 +257,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-
+  // Элементы управления UI пользователя и гостя
   const guestControls = document.getElementById('guest-controls');
   const userControls = document.getElementById('user-controls');
   const userNameSpan = document.getElementById('user-name');
@@ -157,11 +290,11 @@ document.addEventListener('DOMContentLoaded', () => {
     userBalanceSpan.textContent = window.currentUser.balance;
   }
 
-
+  // Логика после входа пользователя
   async function onUserLogin(user) {
     console.log('Пользователь вошёл:', user);
 
-   
+    // Получаем профиль из таблицы users
     const { data, error } = await supabaseClient
       .from('users')
       .select('id, username, balance')
@@ -169,34 +302,74 @@ document.addEventListener('DOMContentLoaded', () => {
       .single();
 
     if (error && error.code === 'PGRST116') {
-  
+      // Если профиль отсутствует — создаём
       const username = user.user_metadata?.user_name || user.email.split('@')[0];
       await supabaseClient.from('users').insert([{ id: user.id, username, balance: 0 }]);
       window.currentUser = { id: user.id, username, balance: 0 };
     } else if (!error) {
       window.currentUser = data;
     } else {
-  
+      // Ошибка — fallback
       window.currentUser = { id: user.id, username: user.email || 'Игрок', balance: 0 };
     }
 
     await showUserUI(user);
     alert(`Добро пожаловать, ${user.email || user.user_metadata?.user_name || 'игрок'}!`);
 
-    
+    // ВАЖНО: вызываем инициализацию краш-игры, передавая функцию получения текущего пользователя
     if (window.initCrashGame) {
       window.initCrashGame(() => window.currentUser);
     }
   }
 
-
+  // Логика выхода
   function onUserLogout() {
     console.log('Пользователь вышел');
     window.currentUser = null;
     showGuestUI();
   }
+document.addEventListener('DOMContentLoaded', () => {
+  const btnOperations = document.getElementById('btn-operations');
+  const btnTop = document.getElementById('btn-top');
+  const operationsContent = document.getElementById('operations-content');
+  const topContent = document.getElementById('top-content');
 
+  btnOperations.addEventListener('click', () => {
+    btnOperations.classList.add('active');
+    btnTop.classList.remove('active');
+    operationsContent.classList.add('active');
+    topContent.classList.remove('active');
+  });
 
+  btnTop.addEventListener('click', () => {
+    btnTop.classList.add('active');
+    btnOperations.classList.remove('active');
+    topContent.classList.add('active');
+    operationsContent.classList.remove('active');
+  });
+
+  // Анимация падающих монет
+  const coinContainer = document.querySelector('.coin-animation');
+
+  function createCoin() {
+    const coin = document.createElement('div');
+    coin.classList.add('coin');
+    coin.style.left = Math.random() * 140 + 'px'; // внутри ширины контейнера с отступом
+    coin.style.animationDuration = (3 + Math.random() * 2) + 's';
+    coin.style.opacity = 0.8 + Math.random() * 0.2;
+    coinContainer.appendChild(coin);
+
+    // Удаляем монету после анимации
+    coin.addEventListener('animationend', () => {
+      coin.remove();
+    });
+  }
+
+  // Создаем монеты с интервалом
+  setInterval(createCoin, 400);
+});
+
+  // Проверка сессии при загрузке страницы
   async function checkSession() {
     const { data: { session } } = await supabaseClient.auth.getSession();
     if (session && session.user) {
@@ -208,4 +381,3 @@ document.addEventListener('DOMContentLoaded', () => {
 
   checkSession();
 });
-
