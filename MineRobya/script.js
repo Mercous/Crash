@@ -5,7 +5,7 @@ window.supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 window.currentUser = null;
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Переключение вкладок меню (Банк / Торговля / Краш)
+ 
   const buttons = document.querySelectorAll('nav.menu-left button[data-screen]');
   const screens = document.querySelectorAll('main .screen');
 
@@ -13,17 +13,17 @@ document.addEventListener('DOMContentLoaded', () => {
     button.addEventListener('click', () => {
       const targetId = button.dataset.screen;
 
-      // Убираем active у всех вкладок и кнопок
+
       screens.forEach(screen => screen.classList.remove('active'));
       buttons.forEach(btn => btn.classList.remove('active'));
 
-      // Добавляем active к выбранной вкладке и кнопке
+   
       document.getElementById(targetId).classList.add('active');
       button.classList.add('active');
     });
   });
 
-  // Элементы управления модалкой аутентификации
+
   const authModal = document.getElementById('auth-modal');
   const btnLogin = document.querySelector('.btn-login');
   const btnRegister = document.querySelector('.btn-register');
@@ -42,7 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
     authModal.classList.remove('active');
   }
 
-  // Переключение вкладок формы аутентификации
+  
   const tabLogin = document.getElementById('tab-login');
   const tabRegister = document.getElementById('tab-register');
   const loginForm = document.getElementById('login-form');
@@ -65,7 +65,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Обработка формы Вход
+
   loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const email = document.getElementById('login-email').value;
@@ -80,12 +80,12 @@ document.addEventListener('DOMContentLoaded', () => {
       await onUserLogin(data.user);
     }
   });
-// Анимация для разных типов меню
+
 function animateEffect(button, screenType) {
   const btnRect = button.getBoundingClientRect();
 
   if (screenType === 'bank') {
-    // Падающие монетки внутри кнопки
+ 
     const coinContainer = document.createElement('div');
     coinContainer.style.position = 'fixed';
     coinContainer.style.left = btnRect.left + 'px';
@@ -118,7 +118,7 @@ function animateEffect(button, screenType) {
       });
     };
 
-    // Создаём несколько монеток с интервалом
+  
     let coinsCount = 10;
     let interval = setInterval(() => {
       if (coinsCount <= 0) {
@@ -131,7 +131,7 @@ function animateEffect(button, screenType) {
     }, 100);
 
   } else if (screenType === 'trade') {
-    // Разлетающиеся предметы (кирка, топор, меч)
+ 
     const items = ['⛏️', '🪓', '⚔️'];
     for (let i = 0; i < 10; i++) {
       const item = document.createElement('span');
@@ -161,7 +161,7 @@ function animateEffect(button, screenType) {
     }
 
   } else if (screenType === 'crash') {
-    // Разлетающиеся алмазики
+   
     for (let i = 0; i < 10; i++) {
       const diamond = document.createElement('span');
       diamond.textContent = '💎';
@@ -191,20 +191,19 @@ function animateEffect(button, screenType) {
   }
 }
 
-// Обновлённый обработчик клика по кнопкам меню
+
 document.querySelectorAll('.menu-btn').forEach(button => {
   button.addEventListener('click', () => {
-    // Получаем тип экрана из data-screen (например, 'bank', 'trade', 'crash')
+    
     const screenType = button.dataset.screen;
 
-    // Запускаем нужную анимацию
+  
     animateEffect(button, screenType);
 
-    // Активируем кнопку сразу
     document.querySelectorAll('.menu-btn').forEach(btn => btn.classList.remove('active'));
     button.classList.add('active');
 
-    // Переключаем экраны с задержкой, чтобы анимация успела
+  
     setTimeout(() => {
       document.querySelectorAll('main .screen').forEach(screen => screen.classList.remove('active'));
       const targetScreen = document.getElementById(screenType);
@@ -214,7 +213,7 @@ document.querySelectorAll('.menu-btn').forEach(button => {
 });
 
 
-  // Обработка формы Регистрация
+  
   registerForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const username = document.getElementById('register-username').value.trim();
@@ -243,7 +242,7 @@ document.querySelectorAll('.menu-btn').forEach(button => {
     }
   });
 
-  // Кнопка входа через Discord OAuth
+
   const discordLoginBtn = document.getElementById('discord-login');
   if (discordLoginBtn) {
     discordLoginBtn.addEventListener('click', async () => {
@@ -257,7 +256,7 @@ document.querySelectorAll('.menu-btn').forEach(button => {
     });
   }
 
-  // Элементы управления UI пользователя и гостя
+
   const guestControls = document.getElementById('guest-controls');
   const userControls = document.getElementById('user-controls');
   const userNameSpan = document.getElementById('user-name');
@@ -290,11 +289,11 @@ document.querySelectorAll('.menu-btn').forEach(button => {
     userBalanceSpan.textContent = window.currentUser.balance;
   }
 
-  // Логика после входа пользователя
+
   async function onUserLogin(user) {
     console.log('Пользователь вошёл:', user);
 
-    // Получаем профиль из таблицы users
+    
     const { data, error } = await supabaseClient
       .from('users')
       .select('id, username, balance')
@@ -302,27 +301,27 @@ document.querySelectorAll('.menu-btn').forEach(button => {
       .single();
 
     if (error && error.code === 'PGRST116') {
-      // Если профиль отсутствует — создаём
+      
       const username = user.user_metadata?.user_name || user.email.split('@')[0];
       await supabaseClient.from('users').insert([{ id: user.id, username, balance: 0 }]);
       window.currentUser = { id: user.id, username, balance: 0 };
     } else if (!error) {
       window.currentUser = data;
     } else {
-      // Ошибка — fallback
+     
       window.currentUser = { id: user.id, username: user.email || 'Игрок', balance: 0 };
     }
 
     await showUserUI(user);
     alert(`Добро пожаловать, ${user.email || user.user_metadata?.user_name || 'игрок'}!`);
 
-    // ВАЖНО: вызываем инициализацию краш-игры, передавая функцию получения текущего пользователя
+    
     if (window.initCrashGame) {
       window.initCrashGame(() => window.currentUser);
     }
   }
 
-  // Логика выхода
+
   function onUserLogout() {
     console.log('Пользователь вышел');
     window.currentUser = null;
@@ -348,28 +347,28 @@ document.addEventListener('DOMContentLoaded', () => {
     operationsContent.classList.remove('active');
   });
 
-  // Анимация падающих монет
+  
   const coinContainer = document.querySelector('.coin-animation');
 
   function createCoin() {
     const coin = document.createElement('div');
     coin.classList.add('coin');
-    coin.style.left = Math.random() * 140 + 'px'; // внутри ширины контейнера с отступом
+    coin.style.left = Math.random() * 140 + 'px';
     coin.style.animationDuration = (3 + Math.random() * 2) + 's';
     coin.style.opacity = 0.8 + Math.random() * 0.2;
     coinContainer.appendChild(coin);
 
-    // Удаляем монету после анимации
+   
     coin.addEventListener('animationend', () => {
       coin.remove();
     });
   }
 
-  // Создаем монеты с интервалом
+
   setInterval(createCoin, 400);
 });
 
-  // Проверка сессии при загрузке страницы
+  
   async function checkSession() {
     const { data: { session } } = await supabaseClient.auth.getSession();
     if (session && session.user) {
@@ -381,3 +380,4 @@ document.addEventListener('DOMContentLoaded', () => {
 
   checkSession();
 });
+
