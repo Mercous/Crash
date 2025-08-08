@@ -1,7 +1,7 @@
 function initCrashGame(getCurrentUser) {
   const supabaseClient = window.supabaseClient;
   
-  // DOM элементы
+
   const betAmount = document.getElementById('bet-amount');
   const startBetBtn = document.getElementById('start-bet');
   const cashOutBtn = document.getElementById('cash-out');
@@ -16,7 +16,7 @@ function initCrashGame(getCurrentUser) {
   const ctx = graphCanvas.getContext('2d');
   const bettingTimer = document.getElementById('betting-timer');
 
-  // Состояние игры
+
   let currentMultiplier = 1.0;
   let gameAnimationFrame;
   let isPlaying = false;
@@ -27,13 +27,13 @@ function initCrashGame(getCurrentUser) {
   let currentRound = null;
   let serverTimeOffset = 0;
 
-  // Константы
+
   const BETTING_DURATION_MS = 30 * 1000;
   let bettingCountdownInterval = null;
   let currentX = 0;
   const speed = 100;
 
-  // Инициализация серверного времени
+ 
   async function initServerTime() {
     try {
       const { data: serverTime, error } = await supabaseClient.rpc('get_server_time');
@@ -45,12 +45,12 @@ function initCrashGame(getCurrentUser) {
     }
   }
 
-  // Получение текущего серверного времени
+
   function getCurrentServerTime() {
     return Date.now() + serverTimeOffset;
   }
 
-  // Отрисовка графика
+ 
   function drawGraph(multiplier, crash) {
     ctx.clearRect(0, 0, graphCanvas.width, graphCanvas.height);
     const width = graphCanvas.width;
@@ -90,7 +90,7 @@ function initCrashGame(getCurrentUser) {
     }
   }
 
-  // Анимация игры
+ 
   function animateGame(timestamp) {
     if (!startTime) startTime = timestamp;
     const elapsed = (timestamp - startTime) / 1000;
@@ -114,7 +114,7 @@ function initCrashGame(getCurrentUser) {
     gameAnimationFrame = requestAnimationFrame(animateGame);
   }
 
-  // Сброс состояния игры
+
   function resetGameStateForNewRound() {
     isPlaying = false;
     cashOutBtn.disabled = true;
@@ -131,7 +131,7 @@ function initCrashGame(getCurrentUser) {
     loadBetHistory();
   }
 
-  // Таймер для ставок
+ 
   function startBettingCountdown(endsAt) {
     clearInterval(bettingCountdownInterval);
     
@@ -152,7 +152,7 @@ function initCrashGame(getCurrentUser) {
     bettingCountdownInterval = setInterval(updateTimer, 100);
   }
 
-  // Запуск анимации игры
+
   function startAnimationIfNeeded() {
     if (!isPlaying && crashPoint && currentRound && !currentRound.ended_at) {
       isPlaying = true;
@@ -166,7 +166,7 @@ function initCrashGame(getCurrentUser) {
     }
   }
 
-  // Подписка на изменения в реальном времени
+
   async function subscribeToRealtime() {
     await initServerTime();
     
@@ -223,7 +223,7 @@ function initCrashGame(getCurrentUser) {
     await betsChannel.subscribe();
   }
 
-  // Загрузка текущих ставок игроков
+  
   async function loadCurrentPlayersBets() {
     if (!currentRound) {
       playersBetsList.innerHTML = '<div>Раунд не активен</div>';
@@ -255,7 +255,7 @@ function initCrashGame(getCurrentUser) {
     });
   }
 
-  // Обработчик кнопки ставки
+
   startBetBtn.addEventListener('click', async () => {
     if (isPlaying) return;
     const val = betAmount.value.trim();
@@ -285,7 +285,7 @@ function initCrashGame(getCurrentUser) {
     }
   });
 
-  // Обработчик кнопки вывода
+
   cashOutBtn.addEventListener('click', async () => {
     if (!isPlaying) return;
     cashOutBtn.disabled = true;
@@ -308,7 +308,7 @@ function initCrashGame(getCurrentUser) {
     }
   });
 
-  // Завершение игры
+
   async function endGame() {
     cancelAnimationFrame(gameAnimationFrame);
     isPlaying = false;
@@ -344,7 +344,7 @@ function initCrashGame(getCurrentUser) {
     await loadCurrentPlayersBets();
   }
 
-  // Показать уведомление
+  
   function showNotification(message) {
     const notification = document.createElement('div');
     notification.className = 'notification';
@@ -353,7 +353,7 @@ function initCrashGame(getCurrentUser) {
     setTimeout(() => notification.remove(), 3000);
   }
 
-  // Отрисовка последних ставок
+
   function renderRecentBets(bets) {
     recentBetsContainer.innerHTML = '';
     bets.slice(0, 5).forEach(bet => {
@@ -376,7 +376,7 @@ function initCrashGame(getCurrentUser) {
     });
   }
 
-  // Обновление статистики профиля
+ 
   function updateProfileStats(bets) {
     const user = getCurrentUser();
     profileUsername.textContent = user.email || user.username || 'Игрок';
@@ -396,7 +396,7 @@ function initCrashGame(getCurrentUser) {
     profileTotalGames.textContent = bets.length;
   }
 
-  // Загрузка истории ставок
+
   async function loadBetHistory() {
     const user = getCurrentUser();
     if (!user) return;
@@ -430,9 +430,10 @@ function initCrashGame(getCurrentUser) {
     }
   }
 
-  // Инициализация игры
+
   subscribeToRealtime();
   drawGraph(1, 10);
 }
 
 window.initCrashGame = initCrashGame;
+
